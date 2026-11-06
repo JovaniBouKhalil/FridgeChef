@@ -1,5 +1,5 @@
-fridgechef-app/client/.env
-fridgechef-app/server/.env
+client/.env
+server/.env
 
-fridgechef-app/client/node_modules
-fridgechef-app/server/node_modules
+client/node_modules
+server/node_modules
