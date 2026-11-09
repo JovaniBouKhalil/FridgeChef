@@ -110,9 +110,10 @@ export default function ShoppingPage() {
     <>
       <div className="page-heading">
         <div>
-          <p className="eyebrow">JUST THE LITTLE THINGS YOU NEED</p>
-          <h1>A thoughtful little shopping list.</h1>
-          <p>Fill in the gaps. Skip the extra trip. Get back to cooking.</p>
+          <h1>Shopping list</h1>
+          <p>
+            Add what you need, or bring in missing ingredients from a recipe.
+          </p>
         </div>
         <Link to="/" className="button button-outline">
           Find a recipe <Icon name="arrow" size={18} />
@@ -122,7 +123,7 @@ export default function ShoppingPage() {
         <section className="panel shopping-panel">
           <div className="section-title">
             <h2>
-              Next time you’re out{' '}
+              To buy{' '}
               <span className="number-badge">{shopping.length - checked}</span>
             </h2>
             {checked > 0 && (
@@ -206,7 +207,7 @@ export default function ShoppingPage() {
             </>
           ) : (
             !requests.shopping.error && (
-              <EmptyState icon="basket" title="Nothing to pick up. Yet.">
+              <EmptyState icon="basket" title="Your shopping list is empty">
                 <p>
                   Add an ingredient above, or open a recipe
                   <br />
@@ -221,23 +222,16 @@ export default function ShoppingPage() {
         </section>
         <aside className="shopping-note">
           <Icon name="basket" size={38} />
-          <h2>
-            A small list.
-            <br />
-            <em>A good plan.</em>
-          </h2>
+          <h2>Add missing ingredients</h2>
           <p>
-            Open any recipe and tap “Add missing to shopping list.” We’ll add
-            the ingredients you don’t have, without repeating what’s already on
-            your list.
+            Open a recipe and choose “Add missing to shopping list”. Items
+            already on this list won’t be added again.
           </p>
-          <div className="note-rule" />
           <p className="small-text">
-            Before you head out, check your pantry one more time. Your future
-            self will thank you.
+            Check quantities in the recipe before shopping.
           </p>
           <Link to="/pantry" className="text-button">
-            Peek in my pantry <Icon name="arrow" size={16} />
+            Check my pantry <Icon name="arrow" size={16} />
           </Link>
         </aside>
       </div>

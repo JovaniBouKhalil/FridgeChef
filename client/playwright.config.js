@@ -18,6 +18,7 @@ export default defineConfig({
     },
     {
       name: 'mobile',
+      testIgnore: '**/responsive.spec.js',
       use: { ...devices['iPhone 13'], defaultBrowserType: 'chromium' },
     },
   ],

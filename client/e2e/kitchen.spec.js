@@ -29,9 +29,7 @@ test('guest discovery searches and filters and keeps private routes protected', 
   page,
 }) => {
   await page.goto('/')
-  await expect(
-    page.getByRole('heading', { name: 'Something good is cooking.' }),
-  ).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Recipes' })).toBeVisible()
   await page
     .getByRole('combobox', { name: 'Search recipes by name' })
     .fill('Spicy')
@@ -49,12 +47,10 @@ test('guest discovery searches and filters and keeps private routes protected', 
   ).toHaveValue('Spicy')
   await expect(page.getByRole('article')).toContainText('Spicy Arrabiata Penne')
   await page.getByRole('button', { name: 'Dessert', exact: true }).click()
-  await expect(page.getByText('No recipes on the menu yet.')).toBeVisible()
+  await expect(page.getByText('No recipes found')).toBeVisible()
   await page.goto('/pantry')
   await expect(page).toHaveURL(/\/login$/)
-  await expect(
-    page.getByRole('heading', { name: 'Welcome back.' }),
-  ).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible()
 })
 
 test('demo kitchen supports pantry CRUD, saving, and a deduplicated shopping checklist', async ({
@@ -63,10 +59,13 @@ test('demo kitchen supports pantry CRUD, saving, and a deduplicated shopping che
   const pageErrors = []
   page.on('pageerror', (error) => pageErrors.push(error.message))
   await page.goto('/login')
-  await page.getByRole('button', { name: 'Explore the demo kitchen' }).click()
-  await expect(
-    page.getByRole('heading', { name: 'Good things in your pantry.' }),
-  ).toBeVisible()
+  await page.getByRole('button', { name: 'Try demo kitchen' }).click()
+  await expect(page.getByRole('heading', { name: 'My pantry' })).toBeVisible()
+  const ingredientForm = page.getByRole('button', {
+    name: 'Add an ingredient',
+    exact: true,
+  })
+  if (await ingredientForm.isVisible()) await ingredientForm.click()
   await page.getByLabel('Ingredient', { exact: true }).fill('Carrots')
   await page.getByLabel('Quantity', { exact: true }).fill('3 whole')
   await page.getByRole('button', { name: 'Add ingredient' }).click()
@@ -187,6 +186,14 @@ test('real API mode signs in, writes with a bearer token, and handles session ex
   await page.getByLabel('Email address').fill('jovani@example.com')
   await page.getByLabel('Password', { exact: true }).fill('test-password')
   await page.getByRole('button', { name: 'Sign in', exact: true }).click()
+  await expect(
+    page.getByRole('heading', { name: 'My pantry', exact: true }),
+  ).toBeVisible()
+  const ingredientForm = page.getByRole('button', {
+    name: 'Add an ingredient',
+    exact: true,
+  })
+  if (await ingredientForm.isVisible()) await ingredientForm.click()
   await page.getByLabel('Ingredient', { exact: true }).fill('Cucumber')
   await page.getByLabel('Quantity', { exact: true }).fill('2 whole')
   await page.getByRole('button', { name: 'Add ingredient' }).click()

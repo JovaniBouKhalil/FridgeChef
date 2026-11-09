@@ -8,9 +8,9 @@
   -moz-osx-font-smoothing: grayscale;
   --green: #234f3b;
   --green-dark: #1c402f;
-  --muted: #767b71;
+  --muted: #626e62;
   --cream: #f6f3e9;
-  --border: #e8e9e0;
+  --border: #dfe3d9;
   --serif: Georgia, 'Times New Roman', serif;
 }
 * {
@@ -19,6 +19,8 @@
 body {
   margin: 0;
   min-width: 320px;
+  font-size: 15px;
+  line-height: 1.5;
 }
 button,
 input,
@@ -90,7 +92,8 @@ input:focus-visible {
 .skip-link {
   position: fixed;
   left: 20px;
-  top: -100px;
+  top: 12px;
+  clip-path: inset(50%);
   z-index: 50;
   padding: 12px 20px;
   background: var(--green);
@@ -98,7 +101,7 @@ input:focus-visible {
   border-radius: 8px;
 }
 .skip-link:focus {
-  top: 12px;
+  clip-path: none;
 }
 @media (prefers-reduced-motion: reduce) {
   *,

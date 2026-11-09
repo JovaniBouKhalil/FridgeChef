@@ -119,43 +119,22 @@ export default function AuthPage({ mode = 'login' }) {
   return (
     <div className="auth-layout">
       <Reveal as="section" className="auth-story">
-        <span className="hero-kicker">
-          <Icon name="leaf" size={17} /> YOUR EVERYDAY KITCHEN, REIMAGINED
-        </span>
-        <h1>
-          A little less
-          <br />
-          “what’s for dinner?”
-          <br />
-          <em>A little more joy.</em>
-        </h1>
-        <p>
-          Your ingredients. Your favorite recipes.
-          <br />
-          Your own little corner of the kitchen.
-        </p>
+        <h2>Keep track of your ingredients.</h2>
+        <p>Save recipes and build a shopping list from what’s missing.</p>
         <img
           src="/images/52977.jpg"
           alt="A warming bowl of lentil soup"
           width="500"
           height="500"
         />
-        <span className="auth-story-caption">
-          Good things are already in your fridge.
-        </span>
+        <span className="auth-story-caption">Corba · Turkish lentil soup</span>
       </Reveal>
       <Reveal as="section" className="auth-form-panel">
-        <span className="soft-icon">
-          <Icon name="chef" size={26} />
-        </span>
-        <p className="eyebrow">
-          {signup ? 'MAKE YOURSELF AT HOME' : 'YOUR KITCHEN IS WAITING'}
-        </p>
-        <h2>{signup ? 'Let’s get cooking.' : 'Welcome back.'}</h2>
+        <h1>{signup ? 'Create an account' : 'Sign in'}</h1>
         <p>
           {signup
-            ? 'Create an account and make the most of what you have.'
-            : 'Sign in to your pantry, saved recipes, and little kitchen plans.'}
+            ? 'Keep your pantry, saved recipes, and shopping list in one place.'
+            : 'Sign in to manage your pantry and saved recipes.'}
         </p>
         {expired && (
           <div className="small-note" role="status">
@@ -164,14 +143,7 @@ export default function AuthPage({ mode = 'login' }) {
           </div>
         )}
         <form onSubmit={submit} noValidate aria-busy={busy}>
-          {signup &&
-            field(
-              'name',
-              'Your name',
-              'text',
-              'What should we call you?',
-              'name',
-            )}
+          {signup && field('name', 'Name', 'text', 'Your name', 'name')}
           {field('email', 'Email address', 'email', 'you@example.com', 'email')}
           {field(
             'password',
@@ -185,17 +157,17 @@ export default function AuthPage({ mode = 'login' }) {
               'confirmPassword',
               'Confirm password',
               'password',
-              'Once more, just to be sure',
+              'Re-enter your password',
               'new-password',
             )}
           <ErrorMessage error={serverError} />
           <button type="submit" className="button button-full" disabled={busy}>
-            {busy ? 'One moment…' : signup ? 'Create my kitchen' : 'Sign in'}
+            {busy ? 'One moment…' : signup ? 'Create account' : 'Sign in'}
             {busy ? <Spinner /> : <Icon name="arrow" size={18} />}
           </button>
         </form>
         <p className="auth-switch">
-          {signup ? 'Already have a kitchen?' : 'New around here?'}{' '}
+          {signup ? 'Already have an account?' : 'Don’t have an account?'}{' '}
           <Link
             to={signup ? '/login' : '/signup'}
             state={{ from: destination }}
@@ -204,7 +176,7 @@ export default function AuthPage({ mode = 'login' }) {
           </Link>
         </p>
         <div className="auth-divider">
-          <span>just looking around?</span>
+          <span>or try it first</span>
         </div>
         <button
           className="button button-outline button-full"
@@ -213,11 +185,9 @@ export default function AuthPage({ mode = 'login' }) {
             navigate(destination)
           }}
         >
-          Explore the demo kitchen <Icon name="arrow" size={17} />
+          Try demo kitchen <Icon name="arrow" size={17} />
         </button>
-        <p className="auth-demo-note">
-          A sample pantry to try things out. No account needed.
-        </p>
+        <p className="auth-demo-note">Sample data. No account required.</p>
       </Reveal>
     </div>
   )

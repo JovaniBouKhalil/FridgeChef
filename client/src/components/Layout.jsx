@@ -31,17 +31,15 @@ export default function Layout() {
   const active = navigation.find((item) => item.to === location.pathname)
   const [recipeHeading, setRecipeHeading] = useState(null)
   const isRecipe = location.pathname.startsWith('/recipes/')
-  const currentLabel =
-    active?.label ||
-    (isRecipe
-      ? recipeHeading && location.pathname === `/recipes/${recipeHeading.id}`
+  const accountLabels = { '/login': 'Sign in', '/signup': 'Create an account' }
+  let currentLabel =
+    active?.label || accountLabels[location.pathname] || 'Page not found'
+  if (isRecipe) {
+    currentLabel =
+      recipeHeading && location.pathname === `/recipes/${recipeHeading.id}`
         ? recipeHeading.title
         : 'Recipe details'
-      : location.pathname === '/login'
-        ? 'Sign in'
-        : location.pathname === '/signup'
-          ? 'Create an account'
-          : 'Page not found')
+  }
   const counts = {
     '/pantry': pantry.length,
     '/favorites': favorites.length,
@@ -73,11 +71,9 @@ export default function Layout() {
             <Icon name="chef" size={27} />
           </span>
           <span>
-            fridge<span className="brand-light">chef</span>
-            <span className="brand-dot">.</span>
+            Fridge<span className="brand-light">Chef</span>
           </span>
         </Link>
-        <div className="sidebar-label">YOUR EVERYDAY KITCHEN</div>
         <nav className="main-nav" aria-label="Main navigation">
           {navigation.map((item) => (
             <NavLink key={item.to} to={item.to} end={item.to === '/'}>
@@ -91,30 +87,30 @@ export default function Layout() {
         </nav>
         <div className="sidebar-bottom">
           <div className="kitchen-note">
-            <span className="note-leaf">
-              <Icon name="leaf" size={25} />
-            </span>
-            <h3>
-              A little less waste.
-              <br />A lot more possibility.
-            </h3>
-            <p>Your next great meal might already be in your fridge.</p>
+            <h3>Use your pantry</h3>
+            <p>
+              Add the ingredients you have to find recipes that need fewer
+              extras.
+            </p>
             {!token && !demo && (
               <button className="text-button" onClick={openDemo}>
                 Try the demo kitchen <Icon name="arrow" size={16} />
               </button>
             )}
           </div>
-          <div className="sidebar-footer">
-            <span className="tiny-dot" />
-            Made for real-life cooking
-          </div>
         </div>
       </aside>
 
       <div className="main-shell">
         <header className="topbar">
-          <nav className="breadcrumb" aria-label="Breadcrumb">
+          <Link className="mobile-brand" to="/" aria-label="FridgeChef home">
+            <Icon name="chef" size={25} />
+            <span>FridgeChef</span>
+          </Link>
+          <nav
+            className={`breadcrumb ${isRecipe ? 'recipe-breadcrumb' : ''}`}
+            aria-label="Breadcrumb"
+          >
             <ol>
               <li>
                 <Link to="/">{isRecipe ? 'Discover' : 'Your kitchen'}</Link>
@@ -130,10 +126,6 @@ export default function Layout() {
             </ol>
           </nav>
           <div className="topbar-actions">
-            <span className="topbar-note">
-              <Icon name="leaf" size={15} />
-              Cook more. Waste less.
-            </span>
             {token || demo ? (
               <>
                 <span
@@ -169,8 +161,7 @@ export default function Layout() {
           <div className="demo-banner">
             <Icon name="info" size={16} />
             <span>
-              <strong>Demo kitchen.</strong> Sample recipes and pantry. Changes
-              stay in this browser.
+              <strong>Demo kitchen.</strong> Changes stay in this browser.
             </span>
             <Link to="/signup">
               Create an account <Icon name="arrow" size={14} />
@@ -181,7 +172,7 @@ export default function Layout() {
           <Outlet context={{ setRecipeHeading }} />
         </main>
         <footer className="page-footer">
-          <span>Good food. Less waste. More you.</span>
+          <span>FridgeChef</span>
           <span>
             Recipes & photography by{' '}
             <a

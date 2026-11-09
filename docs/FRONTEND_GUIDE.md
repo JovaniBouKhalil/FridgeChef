@@ -58,19 +58,19 @@ Desktop discovery:
 │ FridgeChef   │ Breadcrumb                    Sign in/user │
 │              ├─────────────────────────────────────────────┤
 │ Discover     │ Page heading                                │
-│ My pantry    │ ┌────────────────────┬────────────────────┐ │
-│ Saved        │ │ Pantry invitation  │ Recipe photograph  │ │
-│ Shopping     │ └────────────────────┴────────────────────┘ │
-│              │ ┌───────────────────────────┬─────────────┐ │
-│ Kitchen note │ │ Search, categories, match │ Pantry peek │ │
-│              │ │ Recipe card / recipe card│ Kitchen tip │ │
-│              │ │ Recipe card / recipe card│             │ │
+│ My pantry    │ ┌───────────────────────────┬─────────────┐ │
+│ Saved        │ │ Search, categories, match │ Pantry      │ │
+│ Shopping     │ │ Recipe card / recipe card│ summary     │ │
+│              │ │ Recipe card / recipe card│ Featured    │ │
+│ Pantry help  │ │                           │ recipe      │ │
 └──────────────┴─┴───────────────────────────┴─────────────┴─┘
 ```
 
 Private pantry: add ingredient panel beside a searchable ingredient list. Recipe detail: photo/title above ingredient availability and cooking method columns. Saved recipes: card grid with heart toggles. Shopping: add field, progress and checkboxes beside a pantry reminder. Account: cooking image/story beside the validated form.
 
-On mobile, panels stack, recipe cards use two columns, the hero places its photo below the copy, and the sidebar becomes bottom navigation. Layouts include space for the fixed navigation and reduced-motion preferences.
+On mobile, search appears before recipe results without a large promotional hero. The sidebar becomes bottom navigation and a compact brand header identifies the app. Recipe cards use one column below 400px and two columns on wider phones. The pantry starts with the ingredient list; an accessible Add ingredient control opens the form and focuses its first field. Successful additions close the mobile form and return focus to the list. Account and recipe-detail panels stack. Layouts reserve space for fixed navigation and device safe areas.
+
+The responsive suite exercises all seven routes at 320, 360, 430 and 768px, including long user-entered names and validation errors. It checks for horizontal overflow, 44px control targets, 16px text inputs, and accessible mobile pantry controls. These are browser viewport checks, alongside the desktop/mobile interaction suite.
 
 ## Data boundaries
 
@@ -105,7 +105,7 @@ These follow the submitted proposal; implementation remains with the backend tea
 
 1. Open `/`, search by recipe name, change category, clear the search, and open a recipe.
 2. Open `/pantry` as a guest. Confirm login appears. Try signup with invalid email/short password.
-3. Choose Explore the demo kitchen. Add an ingredient, edit the quantity, remove it, and reload.
+3. Choose Try demo kitchen. On mobile, tap Add ingredient to open the form. Add an ingredient, edit the quantity, remove it, and reload.
 4. Open Discover, enable Pantry matches, and inspect the number of ingredients available.
 5. Save a recipe. Open Saved recipes and verify it appears; unsave it.
 6. Open a recipe and add missing ingredients twice. Confirm the list is not duplicated.

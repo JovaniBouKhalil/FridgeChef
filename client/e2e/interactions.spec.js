@@ -39,9 +39,7 @@ test('suggestions support keyboard choice, clearing, history removal, and Escape
   await expect(input).toHaveAttribute('aria-expanded', 'false')
   await expect(input).toBeFocused()
   await input.click()
-  await page
-    .getByRole('heading', { name: 'Something good is cooking.' })
-    .click()
+  await page.getByRole('heading', { name: 'Recipes' }).click()
   await expect(page.getByRole('listbox')).toHaveCount(0)
   await page.reload()
   await input.click()
@@ -89,13 +87,13 @@ test('signup validates touched fields, focuses errors, and shows genuine pending
   await expect(email).toHaveAttribute('aria-invalid', 'false')
   await email.press('Tab')
   await expect(email).toHaveAttribute('aria-invalid', 'true')
-  await page.getByRole('button', { name: 'Create my kitchen' }).click()
-  await expect(page.getByLabel('Your name')).toBeFocused()
-  await page.getByLabel('Your name').fill('Jovani')
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page.getByLabel('Name')).toBeFocused()
+  await page.getByLabel('Name').fill('Jovani')
   await email.fill('jovani@example.com')
   await page.getByLabel('Password', { exact: true }).fill('example-password')
   await page.getByLabel('Confirm password').fill('example-password')
-  await page.getByRole('button', { name: 'Create my kitchen' }).click()
+  await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page.getByRole('button', { name: 'One moment…' })).toBeDisabled()
   await expect(page.locator('form[aria-busy="true"] .spinner')).toBeVisible()
   release()
@@ -103,7 +101,7 @@ test('signup validates touched fields, focuses errors, and shows genuine pending
     'The kitchen is taking a short break.',
   )
   await expect(
-    page.getByRole('button', { name: 'Create my kitchen' }),
+    page.getByRole('button', { name: 'Create account' }),
   ).toBeEnabled()
   await expect(email).toHaveValue('jovani@example.com')
 })
@@ -122,7 +120,7 @@ test('breadcrumbs, reduced motion, observer fallback, and back-to-top work on lo
   )
   await breadcrumb.getByRole('link', { name: 'Discover', exact: true }).click()
   await expect(page.getByRole('article')).toHaveCount(8)
-  const hero = page.locator('.discovery-hero')
+  const hero = page.locator('.pantry-peek')
   await expect(hero).toBeVisible()
   expect(
     await hero.evaluate((element) => getComputedStyle(element).opacity),

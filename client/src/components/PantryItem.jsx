@@ -48,9 +48,6 @@ export default function PantryItem({ item }) {
         />
       ) : (
         <>
-          <span className="ingredient-avatar">
-            <Icon name="leaf" size={21} />
-          </span>
           <div className="ingredient-description">
             <strong>{item.ingredientName}</strong>
             <span>{item.quantity}</span>

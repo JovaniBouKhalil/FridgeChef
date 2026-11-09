@@ -87,7 +87,7 @@ export default function RecipePage() {
   if (state.loading)
     return (
       <p className="loading-text" role="status">
-        <Spinner /> Getting something delicious ready…
+        <Spinner /> Loading recipe…
       </p>
     )
   if (state.error)
@@ -129,7 +129,6 @@ export default function RecipePage() {
           />
         </div>
         <div className="recipe-detail-heading">
-          <p className="eyebrow">A LITTLE INSPIRATION FOR YOUR TABLE</p>
           <div className="detail-tags">
             <span>{meal.strCategory}</span>
             <span>
@@ -138,10 +137,6 @@ export default function RecipePage() {
             </span>
           </div>
           <h1>{meal.strMeal}</h1>
-          <p className="detail-description">
-            A recipe worth making room for. Check what you have, pick up what’s
-            missing, and make it your own.
-          </p>
           <div className="detail-stats">
             <span>
               <Icon name="book" size={20} />
@@ -190,7 +185,7 @@ export default function RecipePage() {
       <div className="recipe-detail-content">
         <section className="panel ingredient-panel">
           <div className="section-title">
-            <h2>The good ingredients.</h2>
+            <h2>Ingredients</h2>
             <span className="number-badge">{match.ingredients.length}</span>
           </div>
           {token || demo ? (
@@ -278,11 +273,7 @@ export default function RecipePage() {
           </p>
         </section>
         <section className="method-panel">
-          <p className="eyebrow">LET’S MAKE SOMETHING GOOD</p>
-          <h2>A little kitchen magic.</h2>
-          <p className="method-intro">
-            Take your time. Taste as you go. Enjoy the process.
-          </p>
+          <h2>Instructions</h2>
           <ol className="method-steps">
             {instructions.map((step, index) => (
               <li key={index}>

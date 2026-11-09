@@ -21,18 +21,16 @@ it('protects the pantry and validates signup before calling the API', async () =
   vi.stubGlobal('fetch', fetchMock)
   const user = userEvent.setup()
   renderApp('/pantry')
-  expect(
-    screen.getByRole('heading', { name: 'Welcome back.' }),
-  ).toBeInTheDocument()
+  expect(screen.getByRole('heading', { name: 'Sign in' })).toBeInTheDocument()
   await user.click(screen.getByRole('link', { name: 'Create an account' }))
-  await user.click(screen.getByRole('button', { name: 'Create my kitchen' }))
+  await user.click(screen.getByRole('button', { name: 'Create account' }))
   expect(screen.getByText('Enter your password.')).toBeInTheDocument()
   expect(screen.getByLabelText('Email address')).toHaveAttribute(
     'aria-invalid',
     'true',
   )
   expect(fetchMock).not.toHaveBeenCalled()
-  expect(screen.getByLabelText('Your name')).toHaveFocus()
+  expect(screen.getByLabelText('Name')).toHaveFocus()
 })
 
 it('uses the loaded recipe name in the breadcrumb and links back to discovery', async () => {
@@ -48,9 +46,7 @@ it('uses the loaded recipe name in the breadcrumb and links back to discovery', 
   await user.click(
     within(breadcrumb).getByRole('link', { name: 'Discover', exact: true }),
   )
-  expect(
-    screen.getByRole('heading', { name: 'Something good is cooking.' }),
-  ).toBeInTheDocument()
+  expect(screen.getByRole('heading', { name: 'Recipes' })).toBeInTheDocument()
 })
 
 it('adds and edits a demo ingredient and keeps it after remounting', async () => {
@@ -143,7 +139,7 @@ it('sends login and pantry requests to Express and clears private state on expir
       .Authorization,
   ).toBe('Bearer real-token')
   act(() => window.dispatchEvent(new Event('auth:expired')))
-  await screen.findByRole('heading', { name: 'Welcome back.' })
+  await screen.findByRole('heading', { name: 'Sign in' })
   expect(localStorage.getItem(TOKEN_KEY)).toBeNull()
   expect(localStorage.getItem(USER_KEY)).toBeNull()
   expect(screen.queryByText('Private garlic')).not.toBeInTheDocument()

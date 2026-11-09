@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useKitchen } from '../context/KitchenContext'
 import IngredientForm from '../components/IngredientForm'
@@ -12,6 +12,10 @@ import { Spinner } from '../components/Feedback'
 export default function PantryPage() {
   const { pantry, requests, mutate } = useKitchen()
   const [search, setSearch] = useState('')
+  const [adding, setAdding] = useState(false)
+  useEffect(() => {
+    if (adding) document.getElementById('ingredientName')?.focus()
+  }, [adding])
   const request = requests.pantry
   const filtered = pantry.filter((item) =>
     item.ingredientName.toLowerCase().includes(search.toLowerCase()),
@@ -29,28 +33,50 @@ export default function PantryPage() {
         'This ingredient is already in your pantry. Edit its quantity instead.',
       )
     await mutate('pantry', 'POST', values)
+    if (adding) {
+      setAdding(false)
+      document
+        .getElementById('pantry-list-title')
+        ?.focus({ preventScroll: true })
+    }
   }
 
   return (
     <>
       <div className="page-heading">
         <div>
-          <p className="eyebrow">A LITTLE ORGANIZATION, A LOT OF POSSIBILITY</p>
-          <h1>Good things in your pantry.</h1>
-          <p>Keep track of what you have. Make room for something delicious.</p>
+          <h1>My pantry</h1>
+          <p>Keep your ingredients up to date for better recipe matches.</p>
         </div>
-        <Link className="button" to="/?matches=true">
-          Find my next meal <Icon name="arrow" size={18} />
-        </Link>
+        <div className="pantry-actions">
+          <button
+            type="button"
+            className="button mobile-add-button"
+            aria-label={adding ? 'Hide ingredient form' : 'Add an ingredient'}
+            aria-expanded={adding}
+            aria-controls="pantry-add-form"
+            onClick={() => setAdding((value) => !value)}
+          >
+            <Icon name={adding ? 'close' : 'plus'} size={18} />
+            {adding ? 'Close form' : 'Add ingredient'}
+          </button>
+          <Link className="button button-outline" to="/?matches=true">
+            Find recipes <Icon name="arrow" size={18} />
+          </Link>
+        </div>
       </div>
       <div className="pantry-layout">
-        <Reveal as="section" className="panel">
+        <Reveal
+          as="section"
+          id="pantry-add-form"
+          className={`panel pantry-add-panel ${adding ? 'is-open' : ''}`}
+        >
           <div className="panel-heading">
             <span className="soft-icon">
               <Icon name="plus" />
             </span>
             <div>
-              <h2>What’s in your kitchen?</h2>
+              <h2>Add an ingredient</h2>
               <p>Add an ingredient and how much you have.</p>
             </div>
           </div>
@@ -68,9 +94,8 @@ export default function PantryPage() {
         </Reveal>
         <Reveal as="section" className="panel pantry-list-panel">
           <div className="section-title">
-            <h2>
-              Your ingredients{' '}
-              <span className="number-badge">{pantry.length}</span>
+            <h2 id="pantry-list-title" tabIndex="-1">
+              Ingredients <span className="number-badge">{pantry.length}</span>
             </h2>
             <Icon name="fridge" size={22} />
           </div>
@@ -103,30 +128,18 @@ export default function PantryPage() {
               <EmptyState
                 icon="fridge"
                 title={
-                  search
-                    ? 'No ingredients found.'
-                    : 'A fresh start for your fridge.'
+                  search ? 'No ingredients found.' : 'Your pantry is empty'
                 }
               >
                 <p>
                   {search
                     ? 'Try another ingredient name.'
-                    : 'Add your first ingredient and let’s see what you can cook.'}
+                    : 'Add your first ingredient using the form.'}
                 </p>
               </EmptyState>
             )
           )}
         </Reveal>
-      </div>
-      <div className="bottom-note">
-        <Icon name="leaf" size={25} />
-        <div>
-          <strong>The best place to start? What’s already there.</strong>
-          <p>
-            Check your fridge, cupboards, and that little jar at the back of the
-            shelf.
-          </p>
-        </div>
       </div>
     </>
   )

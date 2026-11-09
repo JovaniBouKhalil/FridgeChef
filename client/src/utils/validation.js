@@ -16,8 +16,7 @@ export function validateIngredient(form) {
   const errors = {}
   if (!form.ingredientName.trim())
     errors.ingredientName = 'Enter an ingredient name.'
-  if (!form.quantity.trim())
-    errors.quantity = 'Add a quantity, such as 2 whole or 500 g.'
+  if (!form.quantity.trim()) errors.quantity = 'Enter a quantity, e.g. 500 g.'
   return errors
 }
 

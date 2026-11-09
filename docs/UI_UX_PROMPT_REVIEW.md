@@ -19,7 +19,7 @@ These are seven implemented improvement areas drawn from eight source prompts. S
 ## Keep the useful work already present
 
 - **Password visibility (#17):** already implemented with an accessible button. Refine the icon if useful; preserve its behavior.
-- **Split hero (#32):** discovery and account screens already use this structure. Keep the food photography and readable text; avoid additional floating badges and overlapping decoration.
+- **Split hero (#32):** retained for desktop account screens. The later mobile refinement replaces the large discovery hero with direct access to recipe search and a compact featured recipe alongside the desktop results.
 - **Navigation bar (#23):** the app already has a desktop header/sidebar and mobile bottom navigation. Refine mobile branding and active states without adding placeholder notifications or a sticky/static demo toggle.
 - **Card hover/skeletons (#10/#38):** improve the existing components instead of adding parallel components with different visual behavior.
 

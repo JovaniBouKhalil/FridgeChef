@@ -10,4 +10,4 @@ npm ci
 npm run dev
 ```
 
-To review before the backend exists, use **Sign in → Explore the demo kitchen**. Normal account actions call the real Express API configured in `VITE_API_URL`.
+To review before the backend exists, use **Sign in → Try demo kitchen**. Normal account actions call the real Express API configured in `VITE_API_URL`.

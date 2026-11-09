@@ -43,12 +43,11 @@ export default function FavoritesPage() {
     <>
       <div className="page-heading">
         <div>
-          <p className="eyebrow">THE ONES YOU’LL COME BACK TO</p>
-          <h1>A little collection of favorites.</h1>
-          <p>For busy Tuesdays, slow Sundays, and everything in between.</p>
+          <h1>Saved recipes</h1>
+          <p>Recipes you’ve saved for later.</p>
         </div>
         <Link className="button button-outline" to="/">
-          Find more inspiration <Icon name="arrow" size={18} />
+          Browse recipes <Icon name="arrow" size={18} />
         </Link>
       </div>
       <ErrorMessage
@@ -70,12 +69,8 @@ export default function FavoritesPage() {
       ) : (
         !state.error &&
         !requests.favorites.error && (
-          <EmptyState icon="heart" title="Room for your next favorite.">
-            <p>
-              Tap the heart on a recipe you love.
-              <br />
-              We’ll keep it here for the next time you’re hungry.
-            </p>
+          <EmptyState icon="heart" title="No saved recipes">
+            <p>Use the heart button on a recipe to save it here.</p>
             <Link className="button" to="/">
               Discover recipes <Icon name="arrow" size={17} />
             </Link>

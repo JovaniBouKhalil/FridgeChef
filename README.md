@@ -6,7 +6,7 @@ Make more of what is already in your fridge. A web development capstone by **Jov
 
 The React frontend is implemented on `frontend/jovani-fridgechef`. Public recipe browsing uses TheMealDB. Account forms and private pantry, favorites, and shopping actions are prepared for the team's Express API. **`server/server.js` is currently empty: real authentication and database persistence require the backend implementation.** Mocked integration tests do not replace a test against that backend.
 
-You can review the frontend immediately using the explicitly labeled **demo kitchen**. Open Sign in → Explore the demo kitchen. It uses a sample pantry and eight recipe snapshots; changes persist in a separate browser storage key. It never creates an account or simulates a JWT. Exit demo before testing real authentication.
+You can review the frontend immediately using the explicitly labeled **demo kitchen**. Open Sign in → Try demo kitchen. It uses a sample pantry and eight recipe snapshots; changes persist in a separate browser storage key. It never creates an account or simulates a JWT. Exit demo before testing real authentication.
 
 ## Run the frontend
 
@@ -45,7 +45,7 @@ When the backend is ready, run it in a second terminal from `server/` using `npm
 - TheMealDB recipe search, category filtering within results, details, ingredient measurements, and original recipe/video links.
 - Ingredient matching and ranking with explicit missing ingredients; common ingredient aliases are supported. Quantities are not evaluated.
 - Saved recipes and a shopping checklist with deduplicated missing ingredients, check-off, removal, and clearing picked-up items.
-- Responsive desktop sidebar and mobile navigation, keyboard labels, focus states, reduced-motion support, and loading/error/empty states.
+- Responsive desktop sidebar, mobile brand header and bottom navigation, 44px controls, readable inputs, keyboard labels, reduced-motion support, and loading/error/empty states. The mobile pantry opens its add form on demand so ingredients remain easy to reach.
 - An isolated demo kitchen for frontend review before the team's API is available.
 - Keyboard-accessible recipe suggestions, removable recent searches, field feedback on blur with first-error focus, inline pending indicators, stable recipe skeletons, saved-heart feedback, clickable recipe-title breadcrumbs, a mobile-safe back-to-top control, and restrained one-time panel entrances. Motion respects reduced-motion preferences; the implementation remains React hooks and plain CSS.
 
@@ -92,6 +92,8 @@ npm run test:e2e
 The unit/component suite checks ingredient ranking, token headers, 204 responses, 401 expiry, route protection, form validation, pantry edits, shopping deduplication, and mocked login integration. The browser suite checks discovery, pantry CRUD, saved recipes, shopping checkboxes, and API session expiry on desktop and mobile. Browser tests mock external APIs so results do not depend on network availability. `npm run format` formats the source.
 
 Interaction tests also cover keyboard suggestion selection, search history removal, first-invalid-field focus, real pending/error states, recipe breadcrumbs, reduced motion, observer fallback, and back-to-top placement above mobile navigation.
+
+Responsive checks cover all seven routes at 320, 360, 430 and 768px with long ingredient names, checking touch targets, input sizes, mobile pantry access and horizontal overflow.
 
 If the Playwright browser download is unavailable but Chrome is installed, set `PLAYWRIGHT_CHANNEL=chrome` before running the browser tests. In PowerShell: `$env:PLAYWRIGHT_CHANNEL = 'chrome'`, then `npm run test:e2e`.
 

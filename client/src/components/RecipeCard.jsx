@@ -84,7 +84,6 @@ export default function RecipeCard({ meal }) {
       <div className="recipe-card-body">
         <div className="recipe-origin">
           <span>{meal.strArea || 'From the community'}</span>
-          <span>RECIPE</span>
         </div>
         <h3>
           <Link to={`/recipes/${meal.idMeal}`}>{meal.strMeal}</Link>

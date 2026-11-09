@@ -17,8 +17,8 @@
 }
 .search-clear {
   flex-shrink: 0;
-  width: 28px;
-  height: 30px;
+  width: 44px;
+  height: 44px;
 }
 .search-suggestions {
   position: absolute;
@@ -36,9 +36,9 @@
 }
 .suggestions-heading {
   padding: 14px 15px 9px;
-  font-size: 8px;
-  letter-spacing: 1.5px;
-  color: #879574;
+  font-size: 13px;
+  font-weight: 600;
+  color: #546748;
 }
 .suggestion-columns {
   display: flex;
@@ -55,10 +55,10 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  height: 42px;
+  height: 44px;
   padding: 0 10px;
   border-radius: 5px;
-  font-size: 12px;
+  font-size: 14px;
   color: #526748;
   cursor: pointer;
 }
@@ -74,24 +74,24 @@
 .suggestion-columns small {
   margin-left: auto;
   flex-shrink: 0;
-  font-size: 9px;
-  color: #8b997b;
+  font-size: 12px;
+  color: #66765b;
 }
 .suggestion-remove-controls {
-  width: 36px;
+  width: 44px;
   display: flex;
   flex-direction: column;
 }
 .suggestion-remove-controls > * {
-  width: 36px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   flex-shrink: 0;
 }
 .suggestions-hint {
   padding: 10px 15px;
   border-top: 1px solid #edf0e5;
-  font-size: 9px;
-  color: #869276;
+  font-size: 12px;
+  color: #65755b;
 }
 @keyframes suggestion-arrive {
   from {
@@ -192,9 +192,6 @@
 .skeleton .recipe-card-footer {
   min-height: 29px;
   margin-top: 0;
-}
-.recipe-card h3 {
-  min-height: 2.6em;
 }
 @keyframes skeleton-shimmer {
   to {
@@ -333,7 +330,7 @@
     transform: none;
   }
 }
-@media (max-width: 760px) {
+@media (max-width: 900px) {
   .back-to-top {
     bottom: calc(86px + env(safe-area-inset-bottom));
     right: 18px;
@@ -342,14 +339,14 @@
     gap: 9px;
   }
   .breadcrumb [aria-current='page'] {
-    max-width: 33vw;
+    max-width: calc(100vw - 145px);
   }
   .suggestion-columns [role='option'],
   .suggestion-remove-controls > * {
     height: 44px;
   }
   .suggestion-columns [role='option'] {
-    font-size: 13px;
+    font-size: 14px;
   }
 }
 @media (max-width: 520px) {
@@ -357,10 +354,10 @@
     height: 44px;
   }
   .search-clear {
-    width: 25px;
+    width: 44px;
   }
   .suggestions-hint {
-    font-size: 8px;
+    font-size: 11px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

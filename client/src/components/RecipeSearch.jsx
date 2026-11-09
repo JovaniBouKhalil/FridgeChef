@@ -133,7 +133,7 @@ export default function RecipeSearch({ query, onSearch }) {
           }
           aria-describedby={expanded ? hintId : undefined}
           autoComplete="off"
-          placeholder="What are you craving? Try pasta, chicken, soup…"
+          placeholder="Recipe name"
           value={draft}
           maxLength={100}
           onFocus={() => setOpen(true)}
@@ -186,13 +186,17 @@ export default function RecipeSearch({ query, onSearch }) {
             <Icon name="close" size={16} />
           </button>
         )}
-        <button className="button button-small" type="submit">
-          Find recipes <Icon name="arrow" size={16} />
+        <button
+          className="button button-small"
+          type="submit"
+          aria-label="Find recipes"
+        >
+          Search <Icon name="arrow" size={16} />
         </button>
       </form>
       {expanded && (
         <div className="search-suggestions">
-          <p className="suggestions-heading">A LITTLE INSPIRATION</p>
+          <p className="suggestions-heading">Suggestions</p>
           <div className="suggestion-columns">
             <ul id={listId} role="listbox" aria-label="Recipe suggestions">
               {suggestions.map((item, index) => (
@@ -205,7 +209,7 @@ export default function RecipeSearch({ query, onSearch }) {
                   onClick={() => search(item.value)}
                   onPointerMove={() => setActive(index)}
                 >
-                  <Icon name={item.recent ? 'history' : 'sparkle'} size={16} />
+                  <Icon name={item.recent ? 'history' : 'book'} size={16} />
                   <span>{item.value}</span>
                   <small>{item.recent ? 'Recent' : 'Try it'}</small>
                 </li>
