@@ -1,0 +1,15 @@
+/* Enable utilities without resetting the course project's existing CSS. */
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+@theme inline {
+  --color-background: #faf9f6;
+  --color-foreground: #28392e;
+  --color-primary: #234f3b;
+  --color-primary-foreground: #ffffff;
+  --color-muted: #edf1e7;
+  --color-muted-foreground: #626e62;
+  --color-border: #dfe3d9;
+  --color-ring: #ae7637;
+}

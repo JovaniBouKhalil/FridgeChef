@@ -31,7 +31,11 @@ export default function Layout() {
   const active = navigation.find((item) => item.to === location.pathname)
   const [recipeHeading, setRecipeHeading] = useState(null)
   const isRecipe = location.pathname.startsWith('/recipes/')
-  const accountLabels = { '/login': 'Sign in', '/signup': 'Create an account' }
+  const accountLabels = {
+    '/login': 'Sign in',
+    '/signup': 'Create an account',
+    '/featured': 'Featured recipes',
+  }
   let currentLabel =
     active?.label || accountLabels[location.pathname] || 'Page not found'
   if (isRecipe) {

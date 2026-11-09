@@ -1,4 +1,5 @@
 import { Link, Route, Routes } from 'react-router-dom'
+import { lazy, Suspense } from 'react'
 import { useAuth } from './auth/AuthContext'
 import ProtectedRoute from './auth/ProtectedRoute'
 import KitchenProvider from './context/KitchenProvider'
@@ -13,6 +14,8 @@ import { EmptyState } from './components/Feedback'
 import './App.css'
 import './interactions.css'
 
+const FeaturedRecipesPage = lazy(() => import('./pages/FeaturedRecipesPage'))
+
 export default function App() {
   const { token, demo } = useAuth()
   return (
@@ -20,6 +23,20 @@ export default function App() {
       <Routes>
         <Route element={<Layout />}>
           <Route index element={<DiscoverPage />} />
+          <Route
+            path="featured"
+            element={
+              <Suspense
+                fallback={
+                  <p className="loading-text" role="status">
+                    Loading featured recipes…
+                  </p>
+                }
+              >
+                <FeaturedRecipesPage />
+              </Suspense>
+            }
+          />
           <Route path="recipes/:id" element={<RecipePage />} />
           <Route path="login" element={<AuthPage key="login" />} />
           <Route

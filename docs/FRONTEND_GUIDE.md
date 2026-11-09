@@ -33,6 +33,9 @@ flowchart TD
   Shopping[Shopping checklist]
   Demo[Explicit demo kitchen]
   Discover --> Detail
+  Discover --> Featured[Featured recipe carousel]
+  Featured --> Detail
+  Featured --> Favorites
   Discover --> Pantry
   Detail --> Favorites
   Detail --> Shopping
@@ -70,7 +73,7 @@ Private pantry: add ingredient panel beside a searchable ingredient list. Recipe
 
 On mobile, search appears before recipe results without a large promotional hero. The sidebar becomes bottom navigation and a compact brand header identifies the app. Recipe cards use one column below 400px and two columns on wider phones. The pantry starts with the ingredient list; an accessible Add ingredient control opens the form and focuses its first field. Successful additions close the mobile form and return focus to the list. Account and recipe-detail panels stack. Layouts reserve space for fixed navigation and device safe areas.
 
-The responsive suite exercises all seven routes at 320, 360, 430 and 768px, including long user-entered names and validation errors. It checks for horizontal overflow, 44px control targets, 16px text inputs, and accessible mobile pantry controls. These are browser viewport checks, alongside the desktop/mobile interaction suite.
+The responsive suite exercises all eight main routes, including the later Featured carousel, at 320, 360, 430 and 768px, including long user-entered names and validation errors. It checks for horizontal overflow, 44px control targets, 16px text inputs, and accessible mobile pantry controls. These are browser viewport checks, alongside the desktop/mobile interaction suite.
 
 ## Data boundaries
 
@@ -88,7 +91,9 @@ The [42-prompt review](UI_UX_PROMPT_REVIEW.md) records the selected improvements
 
 `Spinner` reflects actual pending operations, while recipe skeletons use the final card layout. Saved hearts animate only after a successful user action. `Layout` supplies clickable breadcrumbs; recipe pages share their loaded title through React Router outlet context. `BackToTop` appears after substantial scrolling, respects reduced motion, returns keyboard focus to the main content, and sits above mobile navigation.
 
-`Reveal` uses IntersectionObserver for a short, one-time panel entrance. Its default is visible content, so missing observers never hide a screen. The styles live in `client/src/interactions.css`, after the main page styles. The implementation adds no runtime dependencies and keeps all existing API/auth boundaries intact.
+`Reveal` uses IntersectionObserver for a short, one-time panel entrance. Its default is visible content, so missing observers never hide a screen. The styles live in `client/src/interactions.css`, after the main page styles. These initial refinements use browser APIs and keep all existing API/auth boundaries intact.
+
+The later user-supplied Dish Orbit component is integrated as a separate, lazy-loaded Featured route. It adds GSAP, Lucide and a typed TSX UI component, with Tailwind/shadcn-compatible tooling available alongside the existing JavaScript screens. The [integration guide](DISH_ORBIT_CAROUSEL.md) explains the differences from the original component, setup, props and cleanup. Carousel save actions still use the same auth and kitchen contexts; there is no separate account store.
 
 ## Proposed database fields for teammates
 

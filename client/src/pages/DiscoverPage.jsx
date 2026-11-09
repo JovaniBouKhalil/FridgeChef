@@ -57,6 +57,9 @@ export default function DiscoverPage() {
           <h1>Cook with what you have</h1>
           <p>Search by name, or use your pantry to find recipes that match.</p>
         </div>
+        <Link className="text-button featured-link" to="/featured">
+          Featured recipes <Icon name="arrow" size={17} />
+        </Link>
       </div>
 
       <section
@@ -232,7 +235,7 @@ export default function DiscoverPage() {
               </>
             )}
           </Reveal>
-          <Link className="featured-recipe" to="/recipes/52771">
+          <Link className="featured-recipe" to="/featured">
             <img
               src="/images/52771.jpg"
               alt="Spicy arrabiata penne"
@@ -244,7 +247,7 @@ export default function DiscoverPage() {
               <span>Recipe to try</span>
               <strong>Spicy Arrabiata Penne</strong>
               <span>
-                View recipe <Icon name="arrow" size={16} />
+                Explore featured recipes <Icon name="arrow" size={16} />
               </span>
             </span>
           </Link>

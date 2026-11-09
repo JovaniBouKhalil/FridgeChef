@@ -47,6 +47,7 @@ for (const screen of screens) {
 
     for (const path of [
       '/',
+      '/featured',
       '/pantry',
       '/recipes/52959',
       '/favorites',

@@ -47,11 +47,12 @@ When the backend is ready, run it in a second terminal from `server/` using `npm
 - Saved recipes and a shopping checklist with deduplicated missing ingredients, check-off, removal, and clearing picked-up items.
 - Responsive desktop sidebar, mobile brand header and bottom navigation, 44px controls, readable inputs, keyboard labels, reduced-motion support, and loading/error/empty states. The mobile pantry opens its add form on demand so ingredients remain easy to reach.
 - An isolated demo kitchen for frontend review before the team's API is available.
+- A lazy-loaded **Featured recipes** carousel at `/featured`, adapted from the supplied Dish Orbit component, with orbital transitions, keyboard/touch controls, real recipe links, videos and saved-recipe actions.
 - Keyboard-accessible recipe suggestions, removable recent searches, field feedback on blur with first-error focus, inline pending indicators, stable recipe skeletons, saved-heart feedback, clickable recipe-title breadcrumbs, a mobile-safe back-to-top control, and restrained one-time panel entrances. Motion respects reduced-motion preferences; the implementation remains React hooks and plain CSS.
 
 ## Stack and architecture
 
-The frontend uses **React, JavaScript/JSX, React Router, Vite, browser fetch, and plain CSS**. It follows the components, hooks, forms, context, and integration patterns in Chapters 12–15 and 20. There is no additional application framework or state management library. Vitest, React Testing Library, and Playwright are development-only verification tools.
+The core frontend uses **React, JavaScript/JSX, React Router, Vite, browser fetch, and plain CSS**, following the components, hooks, forms, context, and integration patterns in Chapters 12–15 and 20. The later supplied carousel adds a typed TSX component, GSAP animation and Lucide icons, plus Tailwind support and a shadcn-compatible source folder/configuration. Existing screens remain JavaScript. There is no additional application framework or state management library. Vitest, React Testing Library, and Playwright are development-only verification tools.
 
 The agreed full-stack architecture is React → Express REST API → MongoDB/Mongoose, with bcrypt/JWT on the server. Public recipe data comes from TheMealDB; the frontend currently requests it directly using its public educational API. Database credentials, JWT signing, password hashing, ownership enforcement, and CORS belong on the server.
 
@@ -77,12 +78,15 @@ Read the [backend integration contract](docs/API_CONTRACT.md) and the [frontend/
 
 The [UI/UX prompt review](docs/UI_UX_PROMPT_REVIEW.md) records the decision on all 42 supplied prompts and the implemented selection. Optional cooking timelines and password recovery are deferred.
 
+The [Dish Orbit integration guide](docs/DISH_ORBIT_CAROUSEL.md) covers the supplied component, added tooling, file paths, props, data, animation cleanup and asset attribution.
+
 ## Verify the frontend
 
 From `client/`:
 
 ```sh
 npm run lint
+npm run typecheck
 npm test
 npm run build
 npx playwright install chromium
@@ -93,7 +97,7 @@ The unit/component suite checks ingredient ranking, token headers, 204 responses
 
 Interaction tests also cover keyboard suggestion selection, search history removal, first-invalid-field focus, real pending/error states, recipe breadcrumbs, reduced motion, observer fallback, and back-to-top placement above mobile navigation.
 
-Responsive checks cover all seven routes at 320, 360, 430 and 768px with long ingredient names, checking touch targets, input sizes, mobile pantry access and horizontal overflow.
+Responsive checks cover all eight main routes, including `/featured`, at 320, 360, 430 and 768px with long ingredient names, checking touch targets, input sizes, mobile pantry access and horizontal overflow. Carousel tests also cover keyboard and touch navigation, tabs, animation cleanup, real recipe actions and guest login return.
 
 If the Playwright browser download is unavailable but Chrome is installed, set `PLAYWRIGHT_CHANNEL=chrome` before running the browser tests. In PowerShell: `$env:PLAYWRIGHT_CHANNEL = 'chrome'`, then `npm run test:e2e`.
 

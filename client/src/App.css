@@ -366,6 +366,9 @@
 }
 
 /* Recipe discovery */
+.featured-link {
+  margin-left: auto;
+}
 .discovery-workspace {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 240px;
