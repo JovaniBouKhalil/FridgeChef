@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Link,
   NavLink,
@@ -9,6 +9,7 @@ import {
 import { useAuth } from '../auth/AuthContext'
 import { useKitchen } from '../context/KitchenContext'
 import Icon from './Icon'
+import BackToTop from './BackToTop'
 
 const navigation = [
   { to: '/', label: 'Discover recipes', short: 'Discover', icon: 'grid' },
@@ -28,6 +29,19 @@ export default function Layout() {
   const location = useLocation()
   const navigate = useNavigate()
   const active = navigation.find((item) => item.to === location.pathname)
+  const [recipeHeading, setRecipeHeading] = useState(null)
+  const isRecipe = location.pathname.startsWith('/recipes/')
+  const currentLabel =
+    active?.label ||
+    (isRecipe
+      ? recipeHeading && location.pathname === `/recipes/${recipeHeading.id}`
+        ? recipeHeading.title
+        : 'Recipe details'
+      : location.pathname === '/login'
+        ? 'Sign in'
+        : location.pathname === '/signup'
+          ? 'Create an account'
+          : 'Page not found')
   const counts = {
     '/pantry': pantry.length,
     '/favorites': favorites.length,
@@ -36,9 +50,12 @@ export default function Layout() {
 
   useEffect(() => {
     window.scrollTo(0, 0)
-    document.title = `${active?.label || (location.pathname.startsWith('/recipes/') ? 'Recipe' : 'Your kitchen')} · FridgeChef`
     document.getElementById('main-content')?.focus({ preventScroll: true })
-  }, [location.pathname, active?.label])
+  }, [location.pathname])
+
+  useEffect(() => {
+    document.title = `${currentLabel} · FridgeChef`
+  }, [currentLabel])
 
   function openDemo() {
     startDemo()
@@ -97,15 +114,21 @@ export default function Layout() {
 
       <div className="main-shell">
         <header className="topbar">
-          <div className="breadcrumb">
-            Your kitchen <span>/</span>{' '}
-            <strong>
-              {active?.label ||
-                (location.pathname.startsWith('/recipes/')
-                  ? 'Recipe details'
-                  : 'Welcome')}
-            </strong>
-          </div>
+          <nav className="breadcrumb" aria-label="Breadcrumb">
+            <ol>
+              <li>
+                <Link to="/">{isRecipe ? 'Discover' : 'Your kitchen'}</Link>
+              </li>
+              <li className="breadcrumb-separator" aria-hidden="true">
+                /
+              </li>
+              <li className="breadcrumb-current">
+                <span aria-current="page" title={currentLabel}>
+                  {currentLabel}
+                </span>
+              </li>
+            </ol>
+          </nav>
           <div className="topbar-actions">
             <span className="topbar-note">
               <Icon name="leaf" size={15} />
@@ -155,7 +178,7 @@ export default function Layout() {
           </div>
         )}
         <main id="main-content" className="page-content" tabIndex="-1">
-          <Outlet />
+          <Outlet context={{ setRecipeHeading }} />
         </main>
         <footer className="page-footer">
           <span>Good food. Less waste. More you.</span>
@@ -179,6 +202,7 @@ export default function Layout() {
           </NavLink>
         ))}
       </nav>
+      <BackToTop />
     </div>
   )
 }

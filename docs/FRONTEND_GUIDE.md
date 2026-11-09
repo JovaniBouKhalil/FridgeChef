@@ -82,6 +82,14 @@ On mobile, panels stack, recipe cards use two columns, the hero places its photo
 - Local form/filter state stays in its screen or component. Shared kitchen resources use context because navigation, recipes, and multiple screens consume them.
 - The demo uses `fridgechef.demoKitchen.v1` in localStorage and `fridgechef.demo` in sessionStorage. Production account data is loaded from the API, never the demo key.
 
+## UI/UX refinements
+
+The [42-prompt review](UI_UX_PROMPT_REVIEW.md) records the selected improvements and deferred ideas. `RecipeSearch` provides a keyboard-accessible combobox, starter ideas and removable local search history. It keeps input focus when a search updates the URL and preserves Back/Forward behavior. Signup, pantry and shopping inputs validate after blur; account and pantry forms reserve space for field feedback and focus the first invalid field on submit.
+
+`Spinner` reflects actual pending operations, while recipe skeletons use the final card layout. Saved hearts animate only after a successful user action. `Layout` supplies clickable breadcrumbs; recipe pages share their loaded title through React Router outlet context. `BackToTop` appears after substantial scrolling, respects reduced motion, returns keyboard focus to the main content, and sits above mobile navigation.
+
+`Reveal` uses IntersectionObserver for a short, one-time panel entrance. Its default is visible content, so missing observers never hide a screen. The styles live in `client/src/interactions.css`, after the main page styles. The implementation adds no runtime dependencies and keeps all existing API/auth boundaries intact.
+
 ## Proposed database fields for teammates
 
 These follow the submitted proposal; implementation remains with the backend team.

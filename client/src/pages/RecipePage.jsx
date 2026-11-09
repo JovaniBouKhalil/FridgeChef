@@ -1,10 +1,16 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import {
+  Link,
+  useNavigate,
+  useOutletContext,
+  useParams,
+} from 'react-router-dom'
 import { getRecipe, recipeImage } from '../api/recipes'
 import { useAuth } from '../auth/AuthContext'
 import { useKitchen } from '../context/KitchenContext'
 import { matchIngredients } from '../utils/ingredients'
-import { ErrorMessage } from '../components/Feedback'
+import { ErrorMessage, Spinner } from '../components/Feedback'
+import Reveal from '../components/Reveal'
 import Icon from '../components/Icon'
 
 function safeExternalLink(value) {
@@ -18,6 +24,7 @@ function safeExternalLink(value) {
 
 export default function RecipePage() {
   const { id } = useParams()
+  const { setRecipeHeading } = useOutletContext()
   const { token, demo } = useAuth()
   const { pantry, favorites, requests, toggleFavorite, addMissing } =
     useKitchen()
@@ -26,6 +33,7 @@ export default function RecipePage() {
   const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState('')
   const [version, setVersion] = useState(0)
+  const [celebrate, setCelebrate] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -34,8 +42,10 @@ export default function RecipePage() {
       setState({ meal: null, loading: true, error: null })
       try {
         const meal = await getRecipe(id, { demo, signal: controller.signal })
-        if (!controller.signal.aborted)
+        if (!controller.signal.aborted) {
           setState({ meal, loading: false, error: null })
+          setRecipeHeading({ id, title: meal.strMeal })
+        }
       } catch (error) {
         if (!controller.signal.aborted)
           setState({ meal: null, loading: false, error })
@@ -43,7 +53,7 @@ export default function RecipePage() {
     }
     load()
     return () => controller.abort()
-  }, [id, demo, version])
+  }, [id, demo, version, setRecipeHeading])
 
   async function act(action) {
     if (!token && !demo) {
@@ -54,8 +64,10 @@ export default function RecipePage() {
     setActionError(null)
     setNotice('')
     try {
-      if (action === 'save') await toggleFavorite(state.meal)
-      else {
+      if (action === 'save') {
+        await toggleFavorite(state.meal)
+        setCelebrate(!saved)
+      } else {
         const count = await addMissing(
           matchIngredients(state.meal, pantry).missing,
         )
@@ -75,7 +87,7 @@ export default function RecipePage() {
   if (state.loading)
     return (
       <p className="loading-text" role="status">
-        Getting something delicious ready…
+        <Spinner /> Getting something delicious ready…
       </p>
     )
   if (state.error)
@@ -107,7 +119,7 @@ export default function RecipePage() {
         <Icon name="back" size={17} />
         Back to Discover
       </Link>
-      <div className="recipe-detail-hero">
+      <Reveal className="recipe-detail-hero">
         <div className="recipe-detail-photo">
           <img
             src={recipeImage(meal)}
@@ -145,13 +157,24 @@ export default function RecipePage() {
           <button
             className={`button ${saved ? 'button-outline' : ''}`}
             onClick={() => act('save')}
+            aria-pressed={saved}
+            aria-busy={busy === 'save'}
             disabled={
               !!busy ||
               (!!token &&
                 (requests.favorites.loading || !!requests.favorites.error))
             }
           >
-            <Icon name="heart" size={18} />
+            {busy === 'save' ? (
+              <Spinner />
+            ) : (
+              <span
+                className={celebrate ? 'heart-confirmation' : ''}
+                onAnimationEnd={() => setCelebrate(false)}
+              >
+                <Icon name="heart" size={18} />
+              </span>
+            )}
             {busy === 'save'
               ? 'Saving…'
               : saved
@@ -162,7 +185,7 @@ export default function RecipePage() {
             Recipe & photography from TheMealDB
           </p>
         </div>
-      </div>
+      </Reveal>
       <ErrorMessage error={actionError} />
       <div className="recipe-detail-content">
         <section className="panel ingredient-panel">
@@ -217,6 +240,7 @@ export default function RecipePage() {
             <button
               className="button button-full"
               onClick={() => act('shopping')}
+              aria-busy={busy === 'shopping'}
               disabled={
                 !!busy ||
                 (!!token &&
@@ -226,7 +250,11 @@ export default function RecipePage() {
                     !!requests.shopping.error))
               }
             >
-              <Icon name="basket" size={18} />
+              {busy === 'shopping' ? (
+                <Spinner />
+              ) : (
+                <Icon name="basket" size={18} />
+              )}
               {busy === 'shopping'
                 ? 'Adding ingredients…'
                 : 'Add missing to shopping list'}

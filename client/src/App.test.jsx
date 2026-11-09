@@ -32,6 +32,25 @@ it('protects the pantry and validates signup before calling the API', async () =
     'true',
   )
   expect(fetchMock).not.toHaveBeenCalled()
+  expect(screen.getByLabelText('Your name')).toHaveFocus()
+})
+
+it('uses the loaded recipe name in the breadcrumb and links back to discovery', async () => {
+  sessionStorage.setItem('fridgechef.demo', 'true')
+  const user = userEvent.setup()
+  renderApp('/recipes/52771')
+  await screen.findByRole('heading', { name: 'Spicy Arrabiata Penne' })
+  const breadcrumb = screen.getByRole('navigation', { name: 'Breadcrumb' })
+  expect(within(breadcrumb).getByText('Spicy Arrabiata Penne')).toHaveAttribute(
+    'aria-current',
+    'page',
+  )
+  await user.click(
+    within(breadcrumb).getByRole('link', { name: 'Discover', exact: true }),
+  )
+  expect(
+    screen.getByRole('heading', { name: 'Something good is cooking.' }),
+  ).toBeInTheDocument()
 })
 
 it('adds and edits a demo ingredient and keeps it after remounting', async () => {
@@ -77,7 +96,7 @@ it('adds only missing ingredients to shopping and does not add duplicates', asyn
     JSON.parse(localStorage.getItem('fridgechef.demoKitchen.v1')).shopping,
   ).toHaveLength(firstCount)
   await user.click(screen.getByRole('link', { name: 'View shopping list' }))
-  const list = screen.getByRole('list')
+  const list = screen.getByRole('list', { name: 'Shopping ingredients' })
   const checkbox = within(list).getAllByRole('checkbox')[0]
   await user.click(checkbox)
   expect(checkbox).toBeChecked()

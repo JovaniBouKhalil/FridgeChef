@@ -11,6 +11,7 @@ import ShoppingPage from './pages/ShoppingPage'
 import AuthPage from './pages/AuthPage'
 import { EmptyState } from './components/Feedback'
 import './App.css'
+import './interactions.css'
 
 export default function App() {
   const { token, demo } = useAuth()

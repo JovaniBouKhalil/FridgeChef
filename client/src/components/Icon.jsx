@@ -1,4 +1,11 @@
 const paths = {
+  up: <path d="M12 20V4m-6 6 6-6 6 6" />,
+  history: (
+    <>
+      <path d="M3 10a9 9 0 1 1 1 7M3 4v6h6" />
+      <path d="M12 7v5l3 2" />
+    </>
+  ),
   leaf: (
     <>
       <path d="M20 4c-8-1-15 2-15 8a6 6 0 0 0 6 6c6 0 9-7 9-14Z" />

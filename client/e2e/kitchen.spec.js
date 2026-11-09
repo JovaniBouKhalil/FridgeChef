@@ -33,19 +33,19 @@ test('guest discovery searches and filters and keeps private routes protected', 
     page.getByRole('heading', { name: 'Something good is cooking.' }),
   ).toBeVisible()
   await page
-    .getByRole('searchbox', { name: 'Search recipes by name' })
+    .getByRole('combobox', { name: 'Search recipes by name' })
     .fill('Spicy')
   await page.getByRole('button', { name: 'Find recipes', exact: true }).click()
   await expect(page.getByRole('article')).toHaveCount(1)
   await expect(page.getByRole('article')).toContainText('Spicy Arrabiata Penne')
   await page
-    .getByRole('searchbox', { name: 'Search recipes by name' })
+    .getByRole('combobox', { name: 'Search recipes by name' })
     .fill('Sushi')
   await page.getByRole('button', { name: 'Find recipes', exact: true }).click()
   await expect(page.getByRole('article')).toContainText('Sushi')
   await page.goBack()
   await expect(
-    page.getByRole('searchbox', { name: 'Search recipes by name' }),
+    page.getByRole('combobox', { name: 'Search recipes by name' }),
   ).toHaveValue('Spicy')
   await expect(page.getByRole('article')).toContainText('Spicy Arrabiata Penne')
   await page.getByRole('button', { name: 'Dessert', exact: true }).click()

@@ -47,6 +47,7 @@ When the backend is ready, run it in a second terminal from `server/` using `npm
 - Saved recipes and a shopping checklist with deduplicated missing ingredients, check-off, removal, and clearing picked-up items.
 - Responsive desktop sidebar and mobile navigation, keyboard labels, focus states, reduced-motion support, and loading/error/empty states.
 - An isolated demo kitchen for frontend review before the team's API is available.
+- Keyboard-accessible recipe suggestions, removable recent searches, field feedback on blur with first-error focus, inline pending indicators, stable recipe skeletons, saved-heart feedback, clickable recipe-title breadcrumbs, a mobile-safe back-to-top control, and restrained one-time panel entrances. Motion respects reduced-motion preferences; the implementation remains React hooks and plain CSS.
 
 ## Stack and architecture
 
@@ -74,6 +75,8 @@ docs/
 
 Read the [backend integration contract](docs/API_CONTRACT.md) and the [frontend/course guide](docs/FRONTEND_GUIDE.md) before changing API shapes.
 
+The [UI/UX prompt review](docs/UI_UX_PROMPT_REVIEW.md) records the decision on all 42 supplied prompts and the implemented selection. Optional cooking timelines and password recovery are deferred.
+
 ## Verify the frontend
 
 From `client/`:
@@ -87,6 +90,8 @@ npm run test:e2e
 ```
 
 The unit/component suite checks ingredient ranking, token headers, 204 responses, 401 expiry, route protection, form validation, pantry edits, shopping deduplication, and mocked login integration. The browser suite checks discovery, pantry CRUD, saved recipes, shopping checkboxes, and API session expiry on desktop and mobile. Browser tests mock external APIs so results do not depend on network availability. `npm run format` formats the source.
+
+Interaction tests also cover keyboard suggestion selection, search history removal, first-invalid-field focus, real pending/error states, recipe breadcrumbs, reduced motion, observer fallback, and back-to-top placement above mobile navigation.
 
 If the Playwright browser download is unavailable but Chrome is installed, set `PLAYWRIGHT_CHANNEL=chrome` before running the browser tests. In PowerShell: `$env:PLAYWRIGHT_CHANNEL = 'chrome'`, then `npm run test:e2e`.
 

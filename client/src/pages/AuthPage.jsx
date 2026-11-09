@@ -2,7 +2,9 @@ import { useState } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import Icon from '../components/Icon'
-import { ErrorMessage } from '../components/Feedback'
+import { ErrorMessage, Spinner } from '../components/Feedback'
+import Reveal from '../components/Reveal'
+import { focusFirstError, validateAuth } from '../utils/validation'
 
 export default function AuthPage({ mode = 'login' }) {
   const signup = mode === 'signup'
@@ -13,7 +15,8 @@ export default function AuthPage({ mode = 'login' }) {
     password: '',
     confirmPassword: '',
   })
-  const [errors, setErrors] = useState({})
+  const [touched, setTouched] = useState({})
+  const errors = validateAuth(form, signup)
   const [serverError, setServerError] = useState(null)
   const [busy, setBusy] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -33,23 +36,19 @@ export default function AuthPage({ mode = 'login' }) {
   function onChange(event) {
     const { name, value } = event.target
     setForm((previous) => ({ ...previous, [name]: value }))
-    setErrors((previous) => ({ ...previous, [name]: '' }))
+    setServerError(null)
   }
 
   async function submit(event) {
     event.preventDefault()
-    const next = {}
-    if (signup && form.name.trim().length < 2)
-      next.name = 'Please enter at least 2 characters.'
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()))
-      next.email = 'Enter a valid email address.'
-    if (signup && form.password.length < 8)
-      next.password = 'Use at least 8 characters.'
-    if (!form.password) next.password = 'Enter your password.'
-    if (signup && form.password !== form.confirmPassword)
-      next.confirmPassword = 'Your passwords don’t match.'
-    setErrors(next)
-    if (Object.keys(next).length) return
+    if (busy) return
+    setTouched(
+      Object.fromEntries(Object.keys(form).map((name) => [name, true])),
+    )
+    if (Object.keys(errors).length) {
+      focusFirstError(event.currentTarget, errors)
+      return
+    }
     setBusy(true)
     setServerError(null)
     try {
@@ -67,6 +66,7 @@ export default function AuthPage({ mode = 'login' }) {
   }
 
   function field(name, label, type, placeholder, autoComplete) {
+    const error = touched[name] && errors[name]
     return (
       <div className="field" key={name}>
         <label htmlFor={name}>{label}</label>
@@ -78,10 +78,14 @@ export default function AuthPage({ mode = 'login' }) {
             placeholder={placeholder}
             value={form[name]}
             onChange={onChange}
+            onBlur={() =>
+              setTouched((previous) => ({ ...previous, [name]: true }))
+            }
+            disabled={busy}
             autoComplete={autoComplete}
             maxLength={name.toLowerCase().includes('password') ? 128 : 100}
-            aria-invalid={!!errors[name]}
-            aria-describedby={errors[name] ? `${name}-error` : undefined}
+            aria-invalid={!!error}
+            aria-describedby={error ? `${name}-error` : undefined}
           />
           {name === 'password' && (
             <button
@@ -90,23 +94,31 @@ export default function AuthPage({ mode = 'login' }) {
               onClick={() => setShowPassword((value) => !value)}
               aria-label={showPassword ? 'Hide password' : 'Show password'}
               aria-pressed={showPassword}
+              disabled={busy}
             >
               <Icon name="eye" size={19} />
             </button>
           )}
         </div>
-        {errors[name] && (
-          <span className="field-error" id={`${name}-error`}>
-            {errors[name]}
-          </span>
-        )}
+        <span
+          className="field-error field-message"
+          id={`${name}-error`}
+          aria-live="polite"
+        >
+          {error && (
+            <>
+              <Icon name="info" size={13} />
+              {error}
+            </>
+          )}
+        </span>
       </div>
     )
   }
 
   return (
     <div className="auth-layout">
-      <section className="auth-story">
+      <Reveal as="section" className="auth-story">
         <span className="hero-kicker">
           <Icon name="leaf" size={17} /> YOUR EVERYDAY KITCHEN, REIMAGINED
         </span>
@@ -131,8 +143,8 @@ export default function AuthPage({ mode = 'login' }) {
         <span className="auth-story-caption">
           Good things are already in your fridge.
         </span>
-      </section>
-      <section className="auth-form-panel">
+      </Reveal>
+      <Reveal as="section" className="auth-form-panel">
         <span className="soft-icon">
           <Icon name="chef" size={26} />
         </span>
@@ -151,7 +163,7 @@ export default function AuthPage({ mode = 'login' }) {
             Your session has expired. Please sign in again.
           </div>
         )}
-        <form onSubmit={submit} noValidate>
+        <form onSubmit={submit} noValidate aria-busy={busy}>
           {signup &&
             field(
               'name',
@@ -179,7 +191,7 @@ export default function AuthPage({ mode = 'login' }) {
           <ErrorMessage error={serverError} />
           <button type="submit" className="button button-full" disabled={busy}>
             {busy ? 'One moment…' : signup ? 'Create my kitchen' : 'Sign in'}
-            <Icon name="arrow" size={18} />
+            {busy ? <Spinner /> : <Icon name="arrow" size={18} />}
           </button>
         </form>
         <p className="auth-switch">
@@ -206,7 +218,7 @@ export default function AuthPage({ mode = 'login' }) {
         <p className="auth-demo-note">
           A sample pantry to try things out. No account needed.
         </p>
-      </section>
+      </Reveal>
     </div>
   )
 }

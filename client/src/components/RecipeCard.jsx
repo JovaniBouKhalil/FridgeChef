@@ -5,13 +5,15 @@ import { useKitchen } from '../context/KitchenContext'
 import { recipeImage } from '../api/recipes'
 import { matchIngredients } from '../utils/ingredients'
 import Icon from './Icon'
-import { ErrorMessage } from './Feedback'
+import { ErrorMessage, Spinner } from './Feedback'
 
 export default function RecipeCard({ meal }) {
   const { token, demo } = useAuth()
   const { pantry, favorites, toggleFavorite, requests } = useKitchen()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
+  const [celebrate, setCelebrate] = useState(false)
+  const [saveFeedback, setSaveFeedback] = useState('')
   const navigate = useNavigate()
   const location = useLocation()
   const match = matchIngredients(meal, pantry)
@@ -28,6 +30,12 @@ export default function RecipeCard({ meal }) {
     setError(null)
     try {
       await toggleFavorite(meal)
+      setCelebrate(!saved)
+      setSaveFeedback(
+        saved
+          ? `${meal.strMeal} removed from saved recipes.`
+          : `${meal.strMeal} saved to your recipes.`,
+      )
     } catch (error) {
       setError(error)
     } finally {
@@ -53,6 +61,7 @@ export default function RecipeCard({ meal }) {
           className={`save-button ${saved ? 'is-saved' : ''}`}
           aria-label={`${saved ? 'Unsave' : 'Save'} ${meal.strMeal}`}
           aria-pressed={saved}
+          aria-busy={busy}
           disabled={
             busy ||
             (!!token &&
@@ -60,7 +69,16 @@ export default function RecipeCard({ meal }) {
           }
           onClick={onSave}
         >
-          <Icon name="heart" size={19} />
+          {busy ? (
+            <Spinner />
+          ) : (
+            <span
+              className={celebrate ? 'heart-confirmation' : ''}
+              onAnimationEnd={() => setCelebrate(false)}
+            >
+              <Icon name="heart" size={19} />
+            </span>
+          )}
         </button>
       </div>
       <div className="recipe-card-body">
@@ -95,6 +113,9 @@ export default function RecipeCard({ meal }) {
           </Link>
         </div>
         <ErrorMessage error={error} />
+        <span className="sr-only" role="status">
+          {saveFeedback}
+        </span>
       </div>
     </article>
   )

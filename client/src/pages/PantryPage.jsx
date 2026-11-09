@@ -6,6 +6,8 @@ import PantryItem from '../components/PantryItem'
 import { EmptyState, ErrorMessage } from '../components/Feedback'
 import { normalizeIngredient } from '../utils/ingredients'
 import Icon from '../components/Icon'
+import Reveal from '../components/Reveal'
+import { Spinner } from '../components/Feedback'
 
 export default function PantryPage() {
   const { pantry, requests, mutate } = useKitchen()
@@ -42,7 +44,7 @@ export default function PantryPage() {
         </Link>
       </div>
       <div className="pantry-layout">
-        <section className="panel">
+        <Reveal as="section" className="panel">
           <div className="panel-heading">
             <span className="soft-icon">
               <Icon name="plus" />
@@ -63,8 +65,8 @@ export default function PantryPage() {
               ingredients with recipes.
             </p>
           </div>
-        </section>
-        <section className="panel pantry-list-panel">
+        </Reveal>
+        <Reveal as="section" className="panel pantry-list-panel">
           <div className="section-title">
             <h2>
               Your ingredients{' '}
@@ -88,7 +90,7 @@ export default function PantryPage() {
           <ErrorMessage error={request.error} onRetry={request.reload} />
           {request.loading ? (
             <p className="loading-text" role="status">
-              Opening your pantry…
+              <Spinner /> Opening your pantry…
             </p>
           ) : filtered.length ? (
             <ul className="pantry-list">
@@ -114,7 +116,7 @@ export default function PantryPage() {
               </EmptyState>
             )
           )}
-        </section>
+        </Reveal>
       </div>
       <div className="bottom-note">
         <Icon name="leaf" size={25} />

@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { ErrorMessage } from './Feedback'
+import { ErrorMessage, Spinner } from './Feedback'
+import { focusFirstError, validateIngredient } from '../utils/validation'
 import Icon from './Icon'
 
 export default function IngredientForm({
@@ -12,17 +13,17 @@ export default function IngredientForm({
     ingredientName: initial?.ingredientName || '',
     quantity: initial?.quantity || '',
   })
+  const [touched, setTouched] = useState({})
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState(false)
+  const errors = validateIngredient(form)
 
   async function handleSubmit(event) {
     event.preventDefault()
-    if (!form.ingredientName.trim()) {
-      setError('Enter an ingredient name.')
-      return
-    }
-    if (!form.quantity.trim()) {
-      setError('Add a quantity, such as 2 whole or 500 g.')
+    if (disabled || busy) return
+    setTouched({ ingredientName: true, quantity: true })
+    if (Object.keys(errors).length) {
+      focusFirstError(event.currentTarget, errors)
       return
     }
     setBusy(true)
@@ -32,7 +33,10 @@ export default function IngredientForm({
         ingredientName: form.ingredientName.trim(),
         quantity: form.quantity.trim(),
       })
-      if (!initial) setForm({ ingredientName: '', quantity: '' })
+      if (!initial) {
+        setForm({ ingredientName: '', quantity: '' })
+        setTouched({})
+      }
     } catch (error) {
       setError(error)
     } finally {
@@ -40,45 +44,62 @@ export default function IngredientForm({
     }
   }
 
+  function field(name, label, placeholder, maxLength) {
+    const id = initial ? `${name}-${initial._id}` : name
+    const fieldError = touched[name] && errors[name]
+    return (
+      <div className="field">
+        <label htmlFor={id}>{label}</label>
+        <input
+          id={id}
+          name={name}
+          placeholder={placeholder}
+          maxLength={maxLength}
+          required
+          disabled={disabled || busy}
+          value={form[name]}
+          autoFocus={!!initial && name === 'ingredientName'}
+          aria-invalid={!!fieldError}
+          aria-describedby={fieldError ? `${id}-error` : undefined}
+          onBlur={() =>
+            setTouched((previous) => ({ ...previous, [name]: true }))
+          }
+          onChange={(event) => {
+            setForm({ ...form, [name]: event.target.value })
+            setError(null)
+          }}
+        />
+        <span
+          className="field-error field-message"
+          id={`${id}-error`}
+          aria-live="polite"
+        >
+          {fieldError && (
+            <>
+              <Icon name="info" size={13} />
+              {fieldError}
+            </>
+          )}
+        </span>
+      </div>
+    )
+  }
+
   return (
-    <form className="ingredient-form" onSubmit={handleSubmit}>
-      <div className="field">
-        <label htmlFor={initial ? `ingredient-${initial._id}` : 'ingredient'}>
-          Ingredient
-        </label>
-        <input
-          id={initial ? `ingredient-${initial._id}` : 'ingredient'}
-          name="ingredientName"
-          placeholder="e.g. Tomatoes"
-          maxLength={80}
-          required
-          disabled={disabled || busy}
-          value={form.ingredientName}
-          onChange={(event) =>
-            setForm({ ...form, ingredientName: event.target.value })
-          }
-          autoFocus={!!initial}
-        />
-      </div>
-      <div className="field">
-        <label htmlFor={initial ? `quantity-${initial._id}` : 'quantity'}>
-          Quantity
-        </label>
-        <input
-          id={initial ? `quantity-${initial._id}` : 'quantity'}
-          name="quantity"
-          placeholder="e.g. 4 whole"
-          maxLength={50}
-          required
-          disabled={disabled || busy}
-          value={form.quantity}
-          onChange={(event) =>
-            setForm({ ...form, quantity: event.target.value })
-          }
-        />
-      </div>
+    <form
+      className="ingredient-form"
+      onSubmit={handleSubmit}
+      noValidate
+      aria-busy={busy}
+    >
+      {field('ingredientName', 'Ingredient', 'e.g. Tomatoes', 80)}
+      {field('quantity', 'Quantity', 'e.g. 4 whole', 50)}
       <button className="button" type="submit" disabled={disabled || busy}>
-        <Icon name={initial ? 'check' : 'plus'} size={18} />
+        {busy ? (
+          <Spinner />
+        ) : (
+          <Icon name={initial ? 'check' : 'plus'} size={18} />
+        )}
         {busy ? 'Saving…' : initial ? 'Save changes' : 'Add ingredient'}
       </button>
       {onCancel && (

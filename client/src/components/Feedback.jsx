@@ -1,5 +1,9 @@
 import Icon from './Icon'
 
+export function Spinner() {
+  return <span className="spinner" aria-hidden="true" />
+}
+
 export function ErrorMessage({ error, onRetry }) {
   if (!error) return null
   return (
@@ -31,10 +35,15 @@ export function RecipeSkeletons() {
   return (
     <div className="recipe-grid" aria-label="Loading recipes" role="status">
       {[1, 2, 3, 4].map((id) => (
-        <div className="recipe-card skeleton" key={id}>
-          <div className="skeleton-image" />
-          <div className="skeleton-line" />
-          <div className="skeleton-line short" />
+        <div className="recipe-card skeleton" key={id} aria-hidden="true">
+          <div className="recipe-photo-wrap skeleton-image skeleton-block" />
+          <div className="recipe-card-body">
+            <div className="skeleton-meta skeleton-block" />
+            <div className="skeleton-title skeleton-block" />
+            <div className="recipe-card-footer">
+              <div className="skeleton-meta skeleton-block" />
+            </div>
+          </div>
         </div>
       ))}
       <span className="sr-only">Loading recipes…</span>

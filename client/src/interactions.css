@@ -1,0 +1,385 @@
+/* Search suggestions use the same palette as the kitchen, with no extra library. */
+.recipe-search {
+  position: relative;
+  z-index: 4;
+}
+.search-form {
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+.search-form:focus-within {
+  border-color: #93a980;
+  box-shadow: 0 0 0 3px #8ba47414;
+}
+.search-form input:focus-visible {
+  outline: none;
+}
+.search-clear {
+  flex-shrink: 0;
+  width: 28px;
+  height: 30px;
+}
+.search-suggestions {
+  position: absolute;
+  inset: calc(100% + 8px) 0 auto;
+  z-index: 20;
+  border: 1px solid #dfe5d5;
+  border-radius: 9px;
+  background: #fffefa;
+  box-shadow: 0 12px 30px #263d281a;
+  max-height: min(360px, 45dvh);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  animation: suggestion-arrive 150ms ease-out;
+}
+.suggestions-heading {
+  padding: 14px 15px 9px;
+  font-size: 8px;
+  letter-spacing: 1.5px;
+  color: #879574;
+}
+.suggestion-columns {
+  display: flex;
+  padding: 0 6px 6px;
+}
+.suggestion-columns ul {
+  flex: 1;
+  min-width: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.suggestion-columns [role='option'] {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 42px;
+  padding: 0 10px;
+  border-radius: 5px;
+  font-size: 12px;
+  color: #526748;
+  cursor: pointer;
+}
+.suggestion-columns [role='option'][aria-selected='true'] {
+  background: #edf2e4;
+  color: var(--green);
+}
+.suggestion-columns [role='option'] > span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.suggestion-columns small {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 9px;
+  color: #8b997b;
+}
+.suggestion-remove-controls {
+  width: 36px;
+  display: flex;
+  flex-direction: column;
+}
+.suggestion-remove-controls > * {
+  width: 36px;
+  height: 42px;
+  flex-shrink: 0;
+}
+.suggestions-hint {
+  padding: 10px 15px;
+  border-top: 1px solid #edf0e5;
+  font-size: 9px;
+  color: #869276;
+}
+@keyframes suggestion-arrive {
+  from {
+    opacity: 0.7;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Field feedback stays beside its input and leaves labels visible. */
+.field input,
+.shopping-add-form input {
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+.field:focus-within > label {
+  color: var(--green);
+}
+.field-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  line-height: 1.6;
+}
+.field-error svg {
+  margin-top: 3px;
+}
+.field-message {
+  min-height: 18px;
+}
+.shopping-field-error {
+  margin: -12px 0 20px;
+}
+.shopping-add-form input[aria-invalid='true'] {
+  border-color: #b87a63;
+  background: #fffaf5;
+}
+.spinner {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spinner-turn 700ms linear infinite;
+  vertical-align: middle;
+}
+.loading-text .spinner {
+  margin-right: 7px;
+}
+@keyframes spinner-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Recipe loading placeholders reserve the same image/title/footer space. */
+.skeleton {
+  animation: none;
+  pointer-events: none;
+}
+.skeleton-block {
+  position: relative;
+  overflow: hidden;
+  background: #e9ecdf;
+  border-radius: 3px;
+}
+.skeleton-block::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 10%,
+    #ffffff70 50%,
+    transparent 90%
+  );
+  transform: translateX(-100%);
+  animation: skeleton-shimmer 1600ms ease-in-out infinite;
+}
+.skeleton-image {
+  border-radius: 0;
+}
+.skeleton-meta {
+  width: 43%;
+  height: 9px;
+}
+.skeleton-title {
+  width: 86%;
+  height: 49px;
+  margin: 7px 0 14px;
+}
+.skeleton .recipe-card-footer {
+  min-height: 29px;
+  margin-top: 0;
+}
+.recipe-card h3 {
+  min-height: 2.6em;
+}
+@keyframes skeleton-shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/* The saved state animates only after a successful save, never on page load. */
+.heart-confirmation {
+  display: inline-flex;
+  animation: heart-pop 240ms ease-out;
+}
+.button[aria-pressed='true'] > span > svg {
+  fill: currentColor;
+}
+.save-button {
+  transition:
+    color 160ms ease,
+    background-color 160ms ease;
+}
+.recipe-card:focus-within {
+  border-color: #a4b593;
+  box-shadow: 0 6px 20px #293d2310;
+}
+.recipe-card:focus-within .recipe-photo {
+  transform: scale(1.02);
+}
+.button:active:not(:disabled) {
+  transform: translateY(0) scale(0.985);
+}
+@keyframes heart-pop {
+  0% {
+    transform: scale(0.85);
+  }
+  55% {
+    transform: scale(1.18);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.breadcrumb {
+  min-width: 0;
+}
+.breadcrumb ol {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-width: 0;
+}
+.breadcrumb a {
+  text-decoration: none;
+  white-space: nowrap;
+  border-radius: 3px;
+}
+.breadcrumb a:hover {
+  color: var(--green);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.breadcrumb-separator {
+  color: #c4c7ba;
+}
+.breadcrumb-current {
+  min-width: 0;
+}
+.breadcrumb [aria-current='page'] {
+  display: block;
+  max-width: min(35vw, 350px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #4a5e48;
+  font-weight: 500;
+}
+
+.back-to-top {
+  position: fixed;
+  bottom: 26px;
+  right: 26px;
+  z-index: 18;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid #ffffff50;
+  border-radius: 50%;
+  background: var(--green);
+  color: #faf9ec;
+  box-shadow: 0 4px 15px #234f3b26;
+  animation: control-arrive 160ms ease-out;
+  transition:
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+}
+.back-to-top:hover {
+  background: var(--green-dark);
+  box-shadow: 0 6px 20px #234f3b35;
+}
+@keyframes control-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Progressive enhancement: observer failure never hides page content. */
+.reveal[data-revealed='true'] {
+  animation: panel-arrive 260ms ease-out both;
+}
+@keyframes panel-arrive {
+  from {
+    opacity: 0.7;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (hover: none) {
+  .recipe-card:hover {
+    transform: none;
+  }
+  .recipe-card:hover .recipe-photo {
+    transform: none;
+  }
+}
+@media (max-width: 760px) {
+  .back-to-top {
+    bottom: calc(86px + env(safe-area-inset-bottom));
+    right: 18px;
+  }
+  .breadcrumb ol {
+    gap: 9px;
+  }
+  .breadcrumb [aria-current='page'] {
+    max-width: 33vw;
+  }
+  .suggestion-columns [role='option'],
+  .suggestion-remove-controls > * {
+    height: 44px;
+  }
+  .suggestion-columns [role='option'] {
+    font-size: 13px;
+  }
+}
+@media (max-width: 520px) {
+  .skeleton-title {
+    height: 44px;
+  }
+  .search-clear {
+    width: 25px;
+  }
+  .suggestions-hint {
+    font-size: 8px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal[data-revealed='true'],
+  .heart-confirmation,
+  .spinner,
+  .back-to-top,
+  .search-suggestions,
+  .skeleton-block::after {
+    animation: none;
+  }
+  .skeleton-block::after {
+    display: none;
+  }
+  .recipe-card:hover,
+  .recipe-card:focus-within .recipe-photo,
+  .recipe-card:hover .recipe-photo,
+  .button:hover:not(:disabled),
+  .button:active:not(:disabled) {
+    transform: none;
+  }
+}

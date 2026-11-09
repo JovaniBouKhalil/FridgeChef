@@ -6,6 +6,7 @@ import useRecipes from '../hooks/useRecipes'
 import RecipeCard from '../components/RecipeCard'
 import RecipeSearch from '../components/RecipeSearch'
 import Icon from '../components/Icon'
+import Reveal from '../components/Reveal'
 import {
   EmptyState,
   ErrorMessage,
@@ -68,7 +69,11 @@ export default function DiscoverPage() {
         </span>
       </div>
 
-      <section className="discovery-hero" aria-labelledby="hero-title">
+      <Reveal
+        as="section"
+        className="discovery-hero"
+        aria-labelledby="hero-title"
+      >
         <div className="hero-copy">
           <span className="hero-kicker">
             <Icon name="leaf" size={16} /> LESS WASTE. MORE DELICIOUS.
@@ -113,7 +118,7 @@ export default function DiscoverPage() {
         <span className="hero-sprig" aria-hidden="true">
           <Icon name="leaf" size={68} />
         </span>
-      </section>
+      </Reveal>
 
       <section
         className="discovery-workspace"
@@ -129,11 +134,7 @@ export default function DiscoverPage() {
               {loading ? 'Finding inspiration…' : `${filtered.length} recipes`}
             </span>
           </div>
-          <RecipeSearch
-            key={query}
-            query={query}
-            onSearch={(q) => changeParams({ q })}
-          />
+          <RecipeSearch query={query} onSearch={(q) => changeParams({ q })} />
           <div className="recipe-filters">
             <div className="category-filters" aria-label="Recipe categories">
               {categories.map((item) => (
@@ -247,7 +248,7 @@ export default function DiscoverPage() {
         </div>
 
         <aside className="discovery-aside">
-          <div className="pantry-peek">
+          <Reveal className="pantry-peek">
             <div className="aside-title">
               <span className="soft-icon">
                 <Icon name="fridge" size={21} />
@@ -301,8 +302,8 @@ export default function DiscoverPage() {
                 )}
               </>
             )}
-          </div>
-          <div className="kitchen-tip">
+          </Reveal>
+          <Reveal className="kitchen-tip">
             <span className="tip-kicker">
               <Icon name="sparkle" size={16} /> A LITTLE KITCHEN WISDOM
             </span>
@@ -317,7 +318,7 @@ export default function DiscoverPage() {
             <span className="tip-doodle" aria-hidden="true">
               <Icon name="leaf" size={46} />
             </span>
-          </div>
+          </Reveal>
           <p className="aside-footnote">
             <Icon name="heart" size={14} />
             Better for your plate.

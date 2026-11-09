@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useKitchen } from '../context/KitchenContext'
 import IngredientForm from './IngredientForm'
-import { ErrorMessage } from './Feedback'
+import { ErrorMessage, Spinner } from './Feedback'
 import Icon from './Icon'
 import { normalizeIngredient } from '../utils/ingredients'
 
@@ -63,7 +63,7 @@ export default function PantryItem({ item }) {
                 disabled={busy}
                 onClick={remove}
               >
-                Yes, remove
+                {busy && <Spinner />}Yes, remove
               </button>
               <button
                 className="icon-button"

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useKitchen } from '../context/KitchenContext'
 import { normalizeIngredient } from '../utils/ingredients'
-import { EmptyState, ErrorMessage } from '../components/Feedback'
+import { EmptyState, ErrorMessage, Spinner } from '../components/Feedback'
 import Icon from '../components/Icon'
 
 function ShoppingItem({ item }) {
@@ -42,7 +42,7 @@ function ShoppingItem({ item }) {
         disabled={busy}
         onClick={() => change('DELETE')}
       >
-        <Icon name="close" size={18} />
+        {busy ? <Spinner /> : <Icon name="close" size={18} />}
       </button>
       <ErrorMessage error={error} />
     </li>
@@ -53,12 +53,20 @@ export default function ShoppingPage() {
   const { shopping, mutate, requests } = useKitchen()
   const [name, setName] = useState('')
   const [error, setError] = useState(null)
-  const [busy, setBusy] = useState(false)
+  const [busy, setBusy] = useState('')
+  const [touched, setTouched] = useState(false)
+  const nameError =
+    touched && !name.trim() ? 'Enter an ingredient for your shopping list.' : ''
   const checked = shopping.filter((item) => item.checked).length
 
   async function add(event) {
     event.preventDefault()
-    if (!name.trim()) return
+    if (busy) return
+    setTouched(true)
+    if (!name.trim()) {
+      event.currentTarget.elements.namedItem('ingredientName')?.focus()
+      return
+    }
     if (
       shopping.some(
         (item) =>
@@ -69,7 +77,7 @@ export default function ShoppingPage() {
       setError('This ingredient is already on your list.')
       return
     }
-    setBusy(true)
+    setBusy('add')
     setError(null)
     try {
       await mutate('shopping', 'POST', {
@@ -77,15 +85,16 @@ export default function ShoppingPage() {
         checked: false,
       })
       setName('')
+      setTouched(false)
     } catch (error) {
       setError(error)
     } finally {
-      setBusy(false)
+      setBusy('')
     }
   }
 
   async function clearChecked() {
-    setBusy(true)
+    setBusy('clear')
     setError(null)
     try {
       for (const item of shopping.filter((item) => item.checked))
@@ -93,7 +102,7 @@ export default function ShoppingPage() {
     } catch (error) {
       setError(error)
     } finally {
-      setBusy(false)
+      setBusy('')
     }
   }
 
@@ -122,18 +131,27 @@ export default function ShoppingPage() {
                 disabled={busy}
                 onClick={clearChecked}
               >
-                Clear picked up
+                {busy === 'clear' && <Spinner />}Clear picked up
               </button>
             )}
           </div>
-          <form className="shopping-add-form" onSubmit={add}>
+          <form
+            className="shopping-add-form"
+            onSubmit={add}
+            noValidate
+            aria-busy={busy === 'add'}
+          >
             <label htmlFor="shopping-ingredient" className="sr-only">
               Add to shopping list
             </label>
             <input
               id="shopping-ingredient"
+              name="ingredientName"
               placeholder="Anything else you need?"
               value={name}
+              aria-invalid={!!nameError}
+              aria-describedby={nameError ? 'shopping-name-error' : undefined}
+              onBlur={() => setTouched(true)}
               onChange={(event) => setName(event.target.value)}
               required
               maxLength={80}
@@ -145,10 +163,20 @@ export default function ShoppingPage() {
               }
               type="submit"
             >
-              <Icon name="plus" size={18} />
-              Add
+              {busy === 'add' ? <Spinner /> : <Icon name="plus" size={18} />}
+              {busy === 'add' ? 'Adding…' : 'Add'}
             </button>
           </form>
+          {nameError && (
+            <p
+              className="field-error shopping-field-error"
+              id="shopping-name-error"
+              aria-live="polite"
+            >
+              <Icon name="info" size={13} />
+              {nameError}
+            </p>
+          )}
           <ErrorMessage error={error} />
           <ErrorMessage
             error={requests.shopping.error}
@@ -156,7 +184,7 @@ export default function ShoppingPage() {
           />
           {requests.shopping.loading ? (
             <p role="status" className="loading-text">
-              Getting your list ready…
+              <Spinner /> Getting your list ready…
             </p>
           ) : shopping.length ? (
             <>
@@ -170,7 +198,7 @@ export default function ShoppingPage() {
                   />
                 </div>
               </div>
-              <ul className="shopping-list">
+              <ul className="shopping-list" aria-label="Shopping ingredients">
                 {shopping.map((item) => (
                   <ShoppingItem key={item._id} item={item} />
                 ))}
