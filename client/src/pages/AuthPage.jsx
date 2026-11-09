@@ -1,0 +1,212 @@
+import { useState } from 'react'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { useAuth } from '../auth/AuthContext'
+import Icon from '../components/Icon'
+import { ErrorMessage } from '../components/Feedback'
+
+export default function AuthPage({ mode = 'login' }) {
+  const signup = mode === 'signup'
+  const { token, expired, authenticate, startDemo } = useAuth()
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  })
+  const [errors, setErrors] = useState({})
+  const [serverError, setServerError] = useState(null)
+  const [busy, setBusy] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const location = useLocation()
+  const navigate = useNavigate()
+  const from = location.state?.from
+  const destination =
+    typeof from === 'string' &&
+    from.startsWith('/') &&
+    !from.startsWith('//') &&
+    !/^\/(login|signup)/.test(from)
+      ? from
+      : '/pantry'
+
+  if (token) return <Navigate to={destination} replace />
+
+  function onChange(event) {
+    const { name, value } = event.target
+    setForm((previous) => ({ ...previous, [name]: value }))
+    setErrors((previous) => ({ ...previous, [name]: '' }))
+  }
+
+  async function submit(event) {
+    event.preventDefault()
+    const next = {}
+    if (signup && form.name.trim().length < 2)
+      next.name = 'Please enter at least 2 characters.'
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()))
+      next.email = 'Enter a valid email address.'
+    if (signup && form.password.length < 8)
+      next.password = 'Use at least 8 characters.'
+    if (!form.password) next.password = 'Enter your password.'
+    if (signup && form.password !== form.confirmPassword)
+      next.confirmPassword = 'Your passwords don’t match.'
+    setErrors(next)
+    if (Object.keys(next).length) return
+    setBusy(true)
+    setServerError(null)
+    try {
+      await authenticate(mode, {
+        ...(signup && { name: form.name.trim() }),
+        email: form.email.trim().toLowerCase(),
+        password: form.password,
+      })
+      navigate(destination, { replace: true })
+    } catch (error) {
+      setServerError(error)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  function field(name, label, type, placeholder, autoComplete) {
+    return (
+      <div className="field" key={name}>
+        <label htmlFor={name}>{label}</label>
+        <div className={name === 'password' ? 'password-input' : ''}>
+          <input
+            id={name}
+            name={name}
+            type={name === 'password' && showPassword ? 'text' : type}
+            placeholder={placeholder}
+            value={form[name]}
+            onChange={onChange}
+            autoComplete={autoComplete}
+            maxLength={name.toLowerCase().includes('password') ? 128 : 100}
+            aria-invalid={!!errors[name]}
+            aria-describedby={errors[name] ? `${name}-error` : undefined}
+          />
+          {name === 'password' && (
+            <button
+              type="button"
+              className="icon-button"
+              onClick={() => setShowPassword((value) => !value)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              aria-pressed={showPassword}
+            >
+              <Icon name="eye" size={19} />
+            </button>
+          )}
+        </div>
+        {errors[name] && (
+          <span className="field-error" id={`${name}-error`}>
+            {errors[name]}
+          </span>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="auth-layout">
+      <section className="auth-story">
+        <span className="hero-kicker">
+          <Icon name="leaf" size={17} /> YOUR EVERYDAY KITCHEN, REIMAGINED
+        </span>
+        <h1>
+          A little less
+          <br />
+          “what’s for dinner?”
+          <br />
+          <em>A little more joy.</em>
+        </h1>
+        <p>
+          Your ingredients. Your favorite recipes.
+          <br />
+          Your own little corner of the kitchen.
+        </p>
+        <img
+          src="/images/52977.jpg"
+          alt="A warming bowl of lentil soup"
+          width="500"
+          height="500"
+        />
+        <span className="auth-story-caption">
+          Good things are already in your fridge.
+        </span>
+      </section>
+      <section className="auth-form-panel">
+        <span className="soft-icon">
+          <Icon name="chef" size={26} />
+        </span>
+        <p className="eyebrow">
+          {signup ? 'MAKE YOURSELF AT HOME' : 'YOUR KITCHEN IS WAITING'}
+        </p>
+        <h2>{signup ? 'Let’s get cooking.' : 'Welcome back.'}</h2>
+        <p>
+          {signup
+            ? 'Create an account and make the most of what you have.'
+            : 'Sign in to your pantry, saved recipes, and little kitchen plans.'}
+        </p>
+        {expired && (
+          <div className="small-note" role="status">
+            <Icon name="lock" size={18} />
+            Your session has expired. Please sign in again.
+          </div>
+        )}
+        <form onSubmit={submit} noValidate>
+          {signup &&
+            field(
+              'name',
+              'Your name',
+              'text',
+              'What should we call you?',
+              'name',
+            )}
+          {field('email', 'Email address', 'email', 'you@example.com', 'email')}
+          {field(
+            'password',
+            'Password',
+            'password',
+            signup ? 'At least 8 characters' : 'Your password',
+            signup ? 'new-password' : 'current-password',
+          )}
+          {signup &&
+            field(
+              'confirmPassword',
+              'Confirm password',
+              'password',
+              'Once more, just to be sure',
+              'new-password',
+            )}
+          <ErrorMessage error={serverError} />
+          <button type="submit" className="button button-full" disabled={busy}>
+            {busy ? 'One moment…' : signup ? 'Create my kitchen' : 'Sign in'}
+            <Icon name="arrow" size={18} />
+          </button>
+        </form>
+        <p className="auth-switch">
+          {signup ? 'Already have a kitchen?' : 'New around here?'}{' '}
+          <Link
+            to={signup ? '/login' : '/signup'}
+            state={{ from: destination }}
+          >
+            {signup ? 'Sign in' : 'Create an account'}
+          </Link>
+        </p>
+        <div className="auth-divider">
+          <span>just looking around?</span>
+        </div>
+        <button
+          className="button button-outline button-full"
+          onClick={() => {
+            startDemo()
+            navigate(destination)
+          }}
+        >
+          Explore the demo kitchen <Icon name="arrow" size={17} />
+        </button>
+        <p className="auth-demo-note">
+          A sample pantry to try things out. No account needed.
+        </p>
+      </section>
+    </div>
+  )
+}
