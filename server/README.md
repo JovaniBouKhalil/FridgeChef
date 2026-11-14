@@ -17,6 +17,16 @@ The server requires a JWT secret of at least 32 bytes and connects to MongoDB be
 - `POST /api/auth/login` accepts `{ email, password }` and returns `200` with a signed token and public user.
 - Use `Authorization: Bearer <token>` for protected routes. The authentication middleware verifies the token and sets `req.user.id`.
 
+## Private APIs
+
+Every private route requires a valid Bearer token. Lists are returned as arrays, item responses use `id` for the MongoDB document ID, and successful deletes return `204` with no body.
+
+- Pantry: `GET` and `POST /api/pantry`; `PATCH` and `DELETE /api/pantry/:id`.
+- Favorites: `GET` and `POST /api/favorites`; `DELETE /api/favorites/:id` uses the favorite document ID.
+- Shopping: `GET` and `POST /api/shopping`; `PATCH` and `DELETE /api/shopping/:id`.
+
+Private records are always queried by both document ID (for item operations) and the authenticated user ID. Duplicate entries return `409`; missing or differently owned records return `404`.
+
 ## Tests
 
-Run `npm --prefix server test` from the repository root, or `npm test` from this directory. The model and authentication tests run without a MongoDB connection.
+Run `npm --prefix server test` from the repository root, or `npm test` from this directory. Model, authentication, and private API tests run without a MongoDB connection.
