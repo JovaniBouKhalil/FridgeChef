@@ -61,7 +61,7 @@ scripts/            Live deployment acceptance check
 
 ## Local setup
 
-Use **Node.js 24 and npm**. Clone this repository, then install each side separately:
+Use **Node.js 24 and npm**, plus a working MongoDB instance or Atlas connection. Clone this repository, then install each side separately:
 
 ```sh
 git clone https://github.com/JovaniBouKhalil/FridgeChef.git
@@ -70,14 +70,26 @@ npm --prefix client ci
 npm --prefix server ci
 ```
 
-Copy the example configuration files. From the repository root in PowerShell:
+If you already have the repository, save any local work, switch to `main` with `git switch main`, then run `git pull --ff-only` from its root instead of cloning it again. Keep your existing `.env` files and run both `npm ci` commands above.
+
+For a fresh setup, copy the example configuration files. These PowerShell commands run from the repository root and preserve any existing `.env` files:
 
 ```powershell
-Copy-Item client/.env.example client/.env
-Copy-Item server/.env.example server/.env
+if (-not (Test-Path client/.env)) { Copy-Item client/.env.example client/.env }
+if (-not (Test-Path server/.env)) { Copy-Item server/.env.example server/.env }
 ```
 
-In macOS/Linux shells, use `cp` for these two copies. Set the private values in `server/.env`:
+In macOS/Linux shells, use `cp` for these copies only when the destination file does not already exist.
+
+Replace the MongoDB placeholder in `server/.env` with a real connection URI. For an already running local MongoDB instance, use `mongodb://127.0.0.1:27017/fridgechef`. For Atlas, use the team's private connection URI and allow this computer's IP address in Atlas Network Access.
+
+Generate a JWT secret using Node:
+
+```sh
+node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
+```
+
+Paste the generated value after `JWT_SECRET=` in `server/.env`. The API intentionally refuses to start with a blank/short secret or an unconfigured database. Keep the other local values as shown:
 
 | Variable | Local value / purpose |
 | --- | --- |
@@ -91,23 +103,29 @@ In macOS/Linux shells, use `cp` for these two copies. Set the private values in 
 
 The frontend example sets `VITE_API_URL=http://localhost:3000`. Vite variables are public; private database/JWT values belong only on the server. Restart Vite after changing frontend environment values.
 
-Start the API in one terminal:
+Open **two terminals in the `FridgeChef` repository root**. Start the API in terminal 1:
 
 ```sh
-cd server
-npm run dev
+npm --prefix server run dev
 ```
 
-Start the frontend in another:
+The API should print `Connected to MongoDB.` and its listening URL. Open `http://localhost:3000/api/health` in a browser; expect `{"status":"ok"}`.
+
+Start the frontend in terminal 2, also from the repository root:
 
 ```sh
-cd client
-npm run dev
+npm --prefix client run dev
 ```
 
 Open the Vite URL, normally `http://localhost:5173`. The backend connects to MongoDB before it starts listening. Normal account and recipe features require the configured API; live recipes also need TheMealDB access.
 
 For interface review without backend credentials, choose **Sign in → Try demo kitchen**. Demo mode has eight recipe snapshots and separate browser storage, never creates a real account, and never simulates a JWT. Exit demo before verifying authentication or persistence.
+
+### First-run check
+
+Outside demo mode, create an account, add an ingredient, edit its quantity, and refresh the page. Save a recipe and add its missing ingredients to Shopping. Log out, create a second account, and confirm that the first account's records are absent. This checks the real API/database connection in addition to the automated tests.
+
+If startup fails, check the error shown in the API terminal first. `MONGODB_URI` must point to a reachable database, `JWT_SECRET` must be filled, and `CLIENT_ORIGIN` must exactly match the Vite origin. If Vite selects another port, update `CLIENT_ORIGIN` and restart the API. On Windows, use `npm.cmd` / `npx.cmd` if PowerShell blocks the `.ps1` launchers.
 
 ## Verification
 
@@ -132,6 +150,8 @@ A production build needs the actual public HTTPS API origin in `VITE_API_URL`, t
 
 Checks run on pushes and pull requests through GitHub Actions. Tests cover ingredient ranking, auth headers/expiry, validation, owner-scoped CRUD, duplicate prevention, upstream errors, security headers/rate limits, and desktop/mobile interactions. Responsive checks include 320, 360, 430, and 768px viewports. The final milestone report records the latest verified results.
 
+A separate [full-stack verification](docs/FULL_STACK_VERIFICATION.md) passed using real MongoDB, the actual `server.js` process, a Chrome browser, and live TheMealDB requests, with no application/API mocks. It checked persistence after an API restart and two-user isolation. Production deployment and the team's own Atlas configuration still need their separate acceptance checks.
+
 ## Deployment and submission evidence
 
 Follow [Chapter 23 deployment](docs/DEPLOYMENT.md) for **Vercel + Render + MongoDB Atlas**. The repository includes the Vercel SPA rewrite, Render Blueprint, CI workflow, and `scripts/verify-deployment.mjs`. Production still requires connected hosting accounts, private database settings, two reachable public URLs, and the live two-user check. Update the pending URL entries above after successful publication.
@@ -141,6 +161,7 @@ Follow [Chapter 23 deployment](docs/DEPLOYMENT.md) for **Vercel + Render + Mongo
 - [API contract](docs/API_CONTRACT.md) and [frontend/course guide](docs/FRONTEND_GUIDE.md): routes, payloads, and course patterns.
 - [Security review](SECURITY.md): three measured before/fix/after findings.
 - [Performance evidence](PERFORMANCE.md): production build and Lighthouse comparison.
+- [Real database and browser verification](docs/FULL_STACK_VERIFICATION.md): actual authentication, persistence, recipe, and shopping flows.
 - [Presentation outline](docs/PRESENTATION.md): a seven-minute walkthrough and Q&A preparation.
 - [Featured carousel](docs/DISH_ORBIT_CAROUSEL.md): plain React/CSS implementation details.
 
