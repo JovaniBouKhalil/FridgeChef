@@ -1,28 +1,8 @@
 import { expect, test } from '@playwright/test'
-import { readFile } from 'node:fs/promises'
-
-const meals = JSON.parse(
-  await readFile(
-    new URL('../src/data/demoMeals.json', import.meta.url),
-    'utf8',
-  ),
-)
+import { mockRecipes } from './support/recipes'
 
 test.beforeEach(async ({ page }) => {
-  await page.route('https://www.themealdb.com/api/**', (route) => {
-    const url = new URL(route.request().url())
-    const id = url.searchParams.get('i')
-    const query = url.searchParams.get('s') || ''
-    return route.fulfill({
-      json: {
-        meals: id
-          ? meals.filter((meal) => meal.idMeal === id)
-          : meals.filter((meal) =>
-              meal.strMeal.toLowerCase().includes(query.toLowerCase()),
-            ),
-      },
-    })
-  })
+  await mockRecipes(page)
 })
 
 test('guest discovery searches and filters and keeps private routes protected', async ({

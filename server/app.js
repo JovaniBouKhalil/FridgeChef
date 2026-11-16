@@ -1,5 +1,7 @@
 import cors from "cors";
 import express from "express";
+import helmet from "helmet";
+import { rateLimit } from "express-rate-limit";
 
 import { createAuthenticateToken } from "./middleware/authenticateToken.js";
 import { errorHandler } from "./middleware/errorHandler.js";
@@ -18,16 +20,46 @@ export function createApp(options = {}) {
     "http://localhost:5173";
   const mealDbService = options.mealDbService ?? createMealDbService();
   const app = express();
+  const proxyHops =
+    options.trustProxyHops ?? Number(process.env.TRUST_PROXY_HOPS || 0);
+  if (!Number.isInteger(proxyHops) || proxyHops < 0) {
+    throw new Error("TRUST_PROXY_HOPS must be a non-negative integer.");
+  }
+  app.set("trust proxy", proxyHops);
 
   app.disable("x-powered-by");
+  app.use(helmet());
   app.use(
     cors({
       origin: clientOrigin,
       allowedHeaders: ["Authorization", "Content-Type"],
       methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-    })
+    }),
   );
   app.use(express.json({ limit: "16kb" }));
+  app.use(
+    "/api",
+    rateLimit({
+      windowMs: 15 * 60 * 1000,
+      limit: 300,
+      standardHeaders: "draft-8",
+      legacyHeaders: false,
+      message: { error: "Too many requests. Please try again in 15 minutes." },
+    }),
+  );
+  app.use(
+    "/api/auth/login",
+    rateLimit({
+      windowMs: 15 * 60 * 1000,
+      limit: 5,
+      skipSuccessfulRequests: true,
+      standardHeaders: "draft-8",
+      legacyHeaders: false,
+      message: {
+        error: "Too many sign-in attempts. Please try again in 15 minutes.",
+      },
+    }),
+  );
 
   app.get("/api/health", (_request, response) => {
     response.json({ status: "ok" });
@@ -41,17 +73,17 @@ export function createApp(options = {}) {
   app.use(
     "/api/pantry",
     authenticateToken,
-    createPantryRouter({ pantryModel: options.pantryModel })
+    createPantryRouter({ pantryModel: options.pantryModel }),
   );
   app.use(
     "/api/favorites",
     authenticateToken,
-    createFavoritesRouter({ favoriteModel: options.favoriteModel })
+    createFavoritesRouter({ favoriteModel: options.favoriteModel }),
   );
   app.use(
     "/api/shopping",
     authenticateToken,
-    createShoppingRouter({ shoppingModel: options.shoppingModel })
+    createShoppingRouter({ shoppingModel: options.shoppingModel }),
   );
 
   app.use(notFound);

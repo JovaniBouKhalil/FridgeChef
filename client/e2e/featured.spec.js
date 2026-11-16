@@ -1,4 +1,9 @@
 import { expect, test } from '@playwright/test'
+import { mockRecipes } from './support/recipes'
+
+test.beforeEach(async ({ page }) => {
+  await mockRecipes(page)
+})
 
 async function demo(page) {
   await page.addInitScript(() =>

@@ -1,10 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Heart } from 'lucide-react'
-import FeaturedRecipeCarousel from '@/components/ui/demo'
-import meals from '../data/demoMeals.json'
+import DishOrbitCarousel from '../components/ui/dish-orbit-carousel'
+import Icon from '../components/Icon'
 import { recipeIngredients } from '../utils/ingredients'
-import { recipeImage } from '../api/recipes'
+import { getRecipe, recipeImage } from '../api/recipes'
 import { useAuth } from '../auth/AuthContext'
 import { useKitchen } from '../context/KitchenContext'
 import { ErrorMessage, Spinner } from '../components/Feedback'
@@ -36,8 +35,8 @@ const selection = [
     accent: '#c7dfd2',
   },
 ]
-const dishes = selection.map((item) => {
-  const meal = meals.find((meal) => meal.idMeal === item.id)
+function featuredDish(meal) {
+  const item = selection.find((item) => item.id === meal.idMeal)
   const paragraph = meal.strInstructions
     .split(/\r?\n/)
     .map((line) => line.trim())
@@ -56,7 +55,7 @@ const dishes = selection.map((item) => {
         : paragraph,
     video: meal.strYoutube,
   }
-})
+}
 
 export default function FeaturedRecipesPage() {
   const { token, demo } = useAuth()
@@ -64,14 +63,39 @@ export default function FeaturedRecipesPage() {
   const [busy, setBusy] = useState('')
   const [error, setError] = useState(null)
   const [notice, setNotice] = useState('')
+  const [state, setState] = useState({ meals: [], loading: true, error: null })
+  const [version, setVersion] = useState(0)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    const controller = new AbortController()
+    async function load() {
+      setState({ meals: [], loading: true, error: null })
+      try {
+        const meals = await Promise.all(
+          selection.map((item) =>
+            getRecipe(item.id, { demo, signal: controller.signal }),
+          ),
+        )
+        if (!controller.signal.aborted)
+          setState({ meals, loading: false, error: null })
+      } catch (error) {
+        if (!controller.signal.aborted)
+          setState({ meals: [], loading: false, error })
+      }
+    }
+    load()
+    return () => controller.abort()
+  }, [demo, version])
+
+  const dishes = state.meals.map(featuredDish)
 
   async function save(dish) {
     if (!token && !demo) {
       navigate('/login', { state: { from: '/featured' } })
       return
     }
-    const meal = meals.find((meal) => meal.idMeal === dish.id)
+    const meal = state.meals.find((meal) => meal.idMeal === dish.id)
     const saved = favorites.some((item) => item.recipeId === dish.id)
     setBusy(dish.id)
     setError(null)
@@ -119,36 +143,51 @@ export default function FeaturedRecipesPage() {
           Browse all recipes
         </Link>
       </div>
-      <FeaturedRecipeCarousel
-        dishes={dishes}
-        backdrop="/images/orbit/kitchen-wall.webp"
-        onOrder={(dish) => navigate(`/recipes/${dish.id}`)}
-        onPlay={play}
-        renderAction={(dish) => {
-          const saved = favorites.some((item) => item.recipeId === dish.id)
-          return (
-            <button
-              type="button"
-              className="featured-save"
-              aria-pressed={saved}
-              aria-busy={busy === dish.id}
-              disabled={
-                !!busy ||
-                (!!token &&
-                  (requests.favorites.loading || !!requests.favorites.error))
-              }
-              onClick={() => save(dish)}
-            >
-              {busy === dish.id ? <Spinner /> : <Heart size={17} />}
-              {busy === dish.id
-                ? 'Saving…'
-                : saved
-                  ? 'Saved recipe'
-                  : 'Save recipe'}
-            </button>
-          )
-        }}
-      />
+      {state.loading ? (
+        <p className="loading-text" role="status">
+          <Spinner /> Loading featured recipes…
+        </p>
+      ) : state.error ? (
+        <ErrorMessage
+          error={state.error}
+          onRetry={() => setVersion((value) => value + 1)}
+        />
+      ) : (
+        <DishOrbitCarousel
+          dishes={dishes}
+          backdrop="/images/orbit/kitchen-wall.webp"
+          onOrder={(dish) => navigate(`/recipes/${dish.id}`)}
+          onPlay={play}
+          renderAction={(dish) => {
+            const saved = favorites.some((item) => item.recipeId === dish.id)
+            return (
+              <button
+                type="button"
+                className="featured-save"
+                aria-pressed={saved}
+                aria-busy={busy === dish.id}
+                disabled={
+                  !!busy ||
+                  (!!token &&
+                    (requests.favorites.loading || !!requests.favorites.error))
+                }
+                onClick={() => save(dish)}
+              >
+                {busy === dish.id ? (
+                  <Spinner />
+                ) : (
+                  <Icon name="heart" size={17} />
+                )}
+                {busy === dish.id
+                  ? 'Saving…'
+                  : saved
+                    ? 'Saved recipe'
+                    : 'Save recipe'}
+              </button>
+            )
+          }}
+        />
+      )}
       <ErrorMessage
         error={error || requests.favorites.error}
         onRetry={

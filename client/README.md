@@ -1,15 +1,16 @@
-# FridgeChef frontend
+﻿# FridgeChef frontend
 
-React + React Router + Vite + plain CSS, following the supplied course slides.
-
-The later Dish Orbit carousel adds a typed component, GSAP/Lucide and Tailwind/shadcn-compatible setup. See the [carousel integration guide](../docs/DISH_ORBIT_CAROUSEL.md). Run `npm run typecheck` to check its TSX files.
-
-See the [project README](../README.md) for setup, features, tests and deployment, [API contract](../docs/API_CONTRACT.md) for backend integration, and [frontend guide](../docs/FRONTEND_GUIDE.md) for course mapping and screen flow.
+React, React Router, JavaScript/JSX, Vite, and plain CSS, following Chapters 12–15 and 20–23. The featured recipe carousel uses React state and CSS keyframes with the shared SVG icon component.
 
 ```sh
 npm ci
-# Copy .env.example to .env, then:
 npm run dev
 ```
 
-To review before the backend exists, use **Sign in → Try demo kitchen**. Normal account actions call the real Express API configured in `VITE_API_URL`.
+Copy `.env.example` to `.env` for local configuration. `VITE_API_URL` is the Express API origin. Public recipes and private account data both use the API; public calls omit the bearer token.
+
+For a production build, set `VITE_API_URL` to the actual public HTTPS API origin, then run `npm run build`. Vercel must use this `client` directory as its root so `vercel.json` supplies the SPA fallback.
+
+To review the interface without a database connection, use **Sign in → Try demo kitchen**. Normal account mode uses the real API and MongoDB persistence.
+
+See the [project README](../README.md), [deployment guide](../docs/DEPLOYMENT.md), [API contract](../docs/API_CONTRACT.md), and [frontend guide](../docs/FRONTEND_GUIDE.md).

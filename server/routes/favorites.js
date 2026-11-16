@@ -24,11 +24,12 @@ function readFavoriteFields(body) {
   if (
     !isRequestObject(body) ||
     typeof body.recipeId !== "string" ||
-    body.recipeId.trim().length === 0 ||
+    !/^\d{1,10}$/.test(body.recipeId.trim()) ||
     typeof body.recipeName !== "string" ||
     body.recipeName.trim().length === 0 ||
+    body.recipeName.trim().length > 200 ||
     (Object.hasOwn(body, "recipeImage") &&
-      typeof body.recipeImage !== "string")
+      (typeof body.recipeImage !== "string" || body.recipeImage.length > 2048))
   ) {
     return null;
   }
@@ -39,6 +40,14 @@ function readFavoriteFields(body) {
   };
 
   if (Object.hasOwn(body, "recipeImage")) {
+    if (body.recipeImage) {
+      try {
+        const image = new URL(body.recipeImage);
+        if (!["http:", "https:"].includes(image.protocol)) return null;
+      } catch {
+        return null;
+      }
+    }
     fields.recipeImage = body.recipeImage;
   }
 
@@ -51,7 +60,9 @@ export function createFavoritesRouter({ favoriteModel = Favorite } = {}) {
 
   router.get("/", async (req, res, next) => {
     try {
-      const favorites = await favoriteModel.find({ userId: req.user.id }).lean();
+      const favorites = await favoriteModel
+        .find({ userId: req.user.id })
+        .lean();
       return res.status(200).json(favorites.map(toFavoriteDto));
     } catch (error) {
       return next(error);

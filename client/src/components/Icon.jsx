@@ -1,4 +1,5 @@
 const paths = {
+  play: <path d="m8 4 12 8-12 8V4Z" />,
   up: <path d="M12 20V4m-6 6 6-6 6 6" />,
   history: (
     <>

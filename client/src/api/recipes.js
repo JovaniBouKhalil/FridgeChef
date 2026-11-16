@@ -1,4 +1,4 @@
-import { mealdbFetch } from './client'
+import { publicApiFetch } from './client'
 import demoMeals from '../data/demoMeals.json'
 import { normalizeIngredient, rankRecipes } from '../utils/ingredients'
 
@@ -10,8 +10,8 @@ export async function getRecipe(id, { demo = false, signal } = {}) {
     if (local) return local
   }
   if (mealCache.has(id)) return mealCache.get(id)
-  const { meals } = await mealdbFetch(
-    `/lookup.php?i=${encodeURIComponent(id)}`,
+  const { meals } = await publicApiFetch(
+    `/api/recipes/${encodeURIComponent(id)}`,
     { signal },
   )
   if (!meals?.[0])
@@ -43,10 +43,9 @@ export async function searchRecipes({
     ].slice(0, 5)
     const lists = await Promise.all(
       names.map((name) =>
-        mealdbFetch(
-          `/filter.php?i=${encodeURIComponent(name.replaceAll(' ', '_'))}`,
-          { signal },
-        ),
+        publicApiFetch(`/api/recipes?ingredient=${encodeURIComponent(name)}`, {
+          signal,
+        }),
       ),
     )
     const ids = [
@@ -66,8 +65,10 @@ export async function searchRecipes({
     }
     return rankRecipes(details, pantry)
   }
-  const { meals } = await mealdbFetch(
-    `/search.php?s=${encodeURIComponent(query)}`,
+  const { meals } = await publicApiFetch(
+    query.trim()
+      ? `/api/recipes/search?name=${encodeURIComponent(query.trim())}`
+      : '/api/recipes/discover',
     { signal },
   )
   for (const meal of meals || []) mealCache.set(meal.idMeal, meal)

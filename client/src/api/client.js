@@ -4,9 +4,6 @@ export const USER_KEY = 'fridgechef.user'
 const API_URL = (
   import.meta.env.VITE_API_URL || 'http://localhost:3000'
 ).replace(/\/$/, '')
-const MEALDB_URL = (
-  import.meta.env.VITE_MEALDB_URL || 'https://www.themealdb.com/api/json/v1/1'
-).replace(/\/$/, '')
 
 // Chapter 20: config, headers, status checks and session expiry live in one place.
 async function requestJSON(url, { authenticated = false, ...options } = {}) {
@@ -55,7 +52,7 @@ export function apiFetch(path, options = {}) {
   return requestJSON(`${API_URL}${path}`, { authenticated: true, ...options })
 }
 
-// A separate origin never receives the user's token.
-export function mealdbFetch(path, options = {}) {
-  return requestJSON(`${MEALDB_URL}${path}`, options)
+// Public recipe requests use our Express proxy without sending a private token.
+export function publicApiFetch(path, options = {}) {
+  return requestJSON(`${API_URL}${path}`, { ...options, authenticated: false })
 }

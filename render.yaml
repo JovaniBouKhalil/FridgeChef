@@ -1,0 +1,28 @@
+# Chapter 23: Express on Render; MongoDB is hosted separately in Atlas.
+services:
+  - type: web
+    name: fridgechef-api
+    runtime: node
+    plan: free
+    rootDir: server
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 1d
+      - key: CLIENT_ORIGIN
+        sync: false
+      - key: TRUST_PROXY_HOPS
+        value: "1"
+      - key: MEALDB_URL
+        value: https://www.themealdb.com/api/json/v1/1
