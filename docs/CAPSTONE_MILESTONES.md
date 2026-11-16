@@ -2,16 +2,16 @@
 
 Reviewed on **16 November 2026** against the final project brief, the submitted FridgeChef proposal, and Chapters 12–23: 14 PDFs, 237 pages. Chapter slides were image-only and were read using OCR. The final brief and proposal define the capstone scope. To-do, weather, and notes exercises are separate teaching examples/assignments; their techniques are applied to FridgeChef without adding unrelated applications.
 
-**Current conclusion:** the application and submission documents are prepared locally, and automated checks pass. Public deployment, real Atlas persistence, a live two-user walkthrough, deadline evidence, and the delivered presentation cannot be certified from local tests.
+**Current conclusion:** Milestones 1–3 have implementation and local functional evidence. A [real MongoDB/full-stack verification](FULL_STACK_VERIFICATION.md) passed, including live recipe requests, an actual API restart, browser account flows, and two-user isolation. Public deployment, the team's particular Atlas configuration, production acceptance, deadline evidence, and the delivered presentation remain separate checks.
 
 ## Milestones explicitly listed in the chapters
 
 | Deliverable | Due | Exact source | Implementation and remaining evidence |
 | --- | --- | --- | --- |
 | Proposal | Session 19 | Chapter 17 p. 24; final brief p. 1 | Supplied one-page proposal includes idea, audience, must/nice-to-have features, stack, team names, and rough schema. Instructor approval and original submission date are not recorded here. |
-| Milestone 1 | Session 20 | Chapter 20 p. 3 | One repo, `client/` + `server/`, two `dev` scripts, ignored env files, committed examples, and setup README. [DESIGN.md](DESIGN.md) now includes every main screen, navigation arrows, and all schema fields/types/references. A fresh real-database startup check on a teammate's configured environment remains. |
-| Milestone 2 | Session 21 | Chapter 21 p. 3 | Signup/login with bcrypt/JWT; every private route authenticated; missing/bad token → 401; main-resource CRUD; owner-scoped queries; meaningful status codes. Backend tests check Bob/Alice isolation and input rejection. A deployed Atlas check remains. |
-| Milestone 3 | Session 22 | Chapter 22 p. 3 | React calls Express using the configured API origin; tokens accompany private calls; loading/errors are visible; signup/login/logout and pantry CRUD exist. Normal mode loads real API data; labeled demo mode is separate. Browser tests cover interactions with mocked HTTP, so the live API/database walkthrough remains required. |
+| Milestone 1 | Session 20 | Chapter 20 p. 3 | One repo, `client/` + `server/`, two `dev` scripts, ignored env files, committed examples, and setup README. [DESIGN.md](DESIGN.md) includes every main screen, navigation arrows, and all schema fields/types/references. Actual `server.js` startup with real MongoDB was verified. |
+| Milestone 2 | Session 21 | Chapter 21 p. 3 | Signup/login with bcrypt/JWT; every private route authenticated; missing/bad token → 401; main-resource CRUD; owner-scoped queries; meaningful status codes. Verified against real MongoDB, including duplicate indexes, Bob/Alice isolation, and records surviving an API process restart. |
+| Milestone 3 | Session 22 | Chapter 22 p. 3 | React calls Express using the configured API origin; tokens accompany private calls; loading/errors are visible. Browser signup/login/logout, pantry CRUD/refresh, recipe matching, favorites, and shopping passed against the actual API, real MongoDB, and live TheMealDB. Normal mode and labeled demo mode remain separate. |
 | Milestone 4 | Session 23 | Chapter 23 p. 3 | **Not deployed yet.** Vercel SPA configuration, Render Blueprint, production config guard, CI, and live verification script are prepared. Still required: public frontend/API URLs, hosted database, URLs at the top of README, successful signup/login/main feature on a phone, and deep-link refresh checks. |
 | Final submission | Session 24 | Chapter 17 p. 25; final brief p. 2 | One full-stack GitHub repo, both live URLs, polished functional app, and a 5–8 minute live demo/Q&A. [PRESENTATION.md](PRESENTATION.md) supplies a seven-minute rehearsal plan. Actual delivery remains the team's responsibility. |
 
@@ -66,7 +66,7 @@ The final brief p. 2 assigns 30 functionality, 20 code quality/organization, 15 
 
 | Criterion | Evidence / highest remaining priority |
 | --- | --- |
-| Functionality — 30 | All proposed features have implementations. Verify the complete flow with real Atlas persistence on public services; mocked tests cannot certify this. |
+| Functionality — 30 | All proposed features have implementations, with local real-database/full-stack evidence. Repeat acceptance with the team's Atlas settings and public services after deployment. |
 | Organization — 20 | Separate client/server, reusable React components and hooks, shared request service, Express routes/services/models, and course-stack JavaScript. |
 | Design/UX — 15 | Responsive screens, keyboard/touch controls, validation, explicit loading/error/empty states, and reviewed desktop/mobile screenshots. |
 | Security/testing — 15 | Hashing, ownership, bounded inputs, safe errors, secrets outside Git, rate limits, headers, and automated tests. Confirm hosted HTTPS/CORS and the two-user check. |

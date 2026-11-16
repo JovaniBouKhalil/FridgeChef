@@ -44,15 +44,18 @@ The after build used the explicitly non-deployable `https://build-only.invalid` 
 - React lazy loading keeps the Featured page out of the initial route load.
 - Image dimensions reserve layout space; noncritical card images load lazily.
 - Recipe details are cached in the browser; ingredient candidates are capped at 24 and hydrated six requests at a time.
+- Successful public provider requests also have a one-minute server cache, capped at 100 URLs, and one bounded retry for transport/upstream 5xx failures. Private collections and errors are not cached.
 - Private MongoDB queries use `lean()` and owner indexes; per-user compound unique indexes support duplicate prevention.
 - AbortController cancels obsolete frontend requests; browser and upstream server requests have timeouts.
 
 ## Automated test evidence
 
-The reviewed source passed **22 frontend tests**, **42 backend tests**, and **24 desktop/mobile browser tests**, plus frontend lint and a configured production build. Browser checks cover responsive widths of 320, 360, 430, and 768px and the actual controls users operate. Backend tests exercise 401/400/404/409/429 cases, hashing, ownership, and upstream failures.
+The reviewed source passed **22 frontend tests**, **46 backend tests**, and **24 desktop/mobile browser tests**, plus frontend lint and a configured production build. Browser checks cover responsive widths of 320, 360, 430, and 768px and the actual controls users operate. Backend tests exercise 401/400/404/409/429 cases, hashing, ownership, upstream failures, bounded retries, and cache expiry.
 
 For the chapter's deliberate-failure exercise, an in-memory copy of `normalizeIngredient` had its alias lookup removed. The assertion that `tomatoes` normalizes to `tomato` failed for that copy and passed against the real source. No project file was left broken.
 
 Tests use injected models and mocked HTTP; real Atlas persistence and the live frontend/API flow remain deployment acceptance checks. Reproduce checks using the root README and [deployment guide](docs/DEPLOYMENT.md).
+
+A separate [local full-stack verification](docs/FULL_STACK_VERIFICATION.md) also passed using real MongoDB, live TheMealDB requests, and a browser without application/API mocks. It confirms local persistence and account isolation; the deployed environment still needs acceptance.
 
 The same source also passed [GitHub Actions on a clean Ubuntu runner](https://github.com/JovaniBouKhalil/FridgeChef/actions/runs/43909610843) at implementation commit `780350a`, including installation, lint, both test suites, the configured build, and all browser checks.

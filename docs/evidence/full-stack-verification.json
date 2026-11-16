@@ -1,0 +1,50 @@
+{
+  "date": "2026-11-16",
+  "sourceCommit": "9455204b11c4988c5a26fb6ee3f11b5e5f48e313",
+  "applicationMocks": false,
+  "database": "Temporary real mongod with WiredTiger",
+  "checks": [
+    {
+      "name": "Real MongoDB connection, model initialization, and index creation",
+      "passed": true
+    },
+    {
+      "name": "Actual server.js startup, signup/login, bcrypt storage, and JWT protection",
+      "passed": true
+    },
+    {
+      "name": "Real database CRUD, unique indexes, mass-assignment resistance, and Alice/Bob ownership isolation",
+      "passed": true
+    },
+    {
+      "name": "Pantry, favorites, and shopping records survive an actual Node API process restart; owned deletes persist",
+      "passed": true
+    },
+    {
+      "name": "Unmocked TheMealDB recipe detail, name search, and ingredient proxy requests",
+      "passed": true
+    },
+    {
+      "name": "Browser signup and pantry create/edit/refresh through real JWT/Express/MongoDB",
+      "passed": true
+    },
+    {
+      "name": "Browser live recipe search, pantry matching, saved recipes, missing-item deduplication, and persisted shopping checks",
+      "passed": true
+    },
+    {
+      "name": "Browser logout/login, pantry deletion, second-account isolation, and no uncaught page errors",
+      "passed": true
+    }
+  ],
+  "passed": true,
+  "verifiedWorkingTreeChanges": [
+    "server/services/mealDbService.js"
+  ],
+  "providerServiceSha256": "737e5ea278be0c3051ad3fa621cf0b232d08677a8b4d2e5e37527d3481aadbde",
+  "loginReturnPaths": [
+    "/favorites",
+    "/pantry"
+  ],
+  "mongoVersion": "8.2.6"
+}
