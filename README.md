@@ -4,7 +4,7 @@ Make more of what is already in your fridge. A web development capstone by **Jov
 
 ## Current status
 
-The React frontend is implemented on `frontend/jovani-fridgechef`. Public recipe browsing uses TheMealDB. Account forms and private pantry, favorites, and shopping actions are prepared for the team's Express API. **`server/server.js` is currently empty: real authentication and database persistence require the backend implementation.** Mocked integration tests do not replace a test against that backend.
+FridgeChef is integrated as a React frontend and Express REST API with MongoDB/Mongoose persistence, bcrypt/JWT authentication, private pantry/favorites/shopping routes, and a public TheMealDB recipe proxy. Public recipe browsing in the frontend currently uses TheMealDB directly, while account and kitchen requests use the Express API.
 
 You can review the frontend immediately using the explicitly labeled **demo kitchen**. Open Sign in → Try demo kitchen. It uses a sample pantry and eight recipe snapshots; changes persist in a separate browser storage key. It never creates an account or simulates a JWT. Exit demo before testing real authentication.
 
@@ -15,7 +15,6 @@ Use Node.js 22.12+ or Node.js 24 LTS and npm.
 ```sh
 git clone https://github.com/JovaniBouKhalil/FridgeChef.git
 cd FridgeChef
-git switch frontend/jovani-fridgechef
 cd client
 npm ci
 ```
@@ -34,7 +33,7 @@ npm run dev
 
 Open the URL printed by Vite (normally http://localhost:5173). Public discovery needs internet access to TheMealDB. The demo kitchen's sample recipes and images work without that service after the local application has loaded.
 
-When the backend is ready, run it in a second terminal from `server/` using `npm ci` then `npm run dev`, as in Chapter 20. Set `VITE_API_URL` to its origin, normally `http://localhost:3000`, and configure the server to accept `CLIENT_ORIGIN=http://localhost:5173`. Restart Vite after changing environment variables. Running the current empty server file will not start an API.
+Run the backend in a second terminal from `server/` using `npm ci` then `npm run dev`. Copy `server/.env.example` to `server/.env` and configure `MONGODB_URI` plus a `JWT_SECRET` of at least 32 bytes. Set `VITE_API_URL` to the backend origin, normally `http://localhost:3000`, and configure the server to accept `CLIENT_ORIGIN=http://localhost:5173`. Restart Vite after changing client environment variables.
 
 ## Features
 
@@ -68,7 +67,7 @@ client/
     pages/        # Route-level screens
     utils/        # Ingredient matching and storage parsing
   e2e/            # Desktop/mobile browser tests
-server/           # Existing Express scaffold; owned by backend teammates
+server/           # Express API, authentication, recipe proxy, and MongoDB models
 docs/
   API_CONTRACT.md  # Exact endpoint and payload agreement for the team
   FRONTEND_GUIDE.md # Course mapping, screen flow, and manual checks
@@ -105,7 +104,7 @@ If the Playwright browser download is unavailable but Chrome is installed, set `
 
 Build the frontend with `npm run build` and publish `client/dist`. Set `VITE_API_URL` to the reachable HTTPS API origin **before building**. Vite replaces `VITE_` values at build time: they are public, so keep secrets exclusively in server environment settings. The app uses browser routing; configure the host to serve `index.html` for unknown application paths. `client/public/_redirects` provides this fallback for Netlify. Other hosts need equivalent configuration.
 
-The final capstone still requires the team's real Express routes, MongoDB persistence, bcrypt/JWT authentication and user ownership checks, at least one automated backend test, verification with two real users, live frontend and API URLs, and the 5–8 minute team presentation. This frontend branch does not claim those backend/deployment requirements are complete.
+Deployment still requires real MongoDB credentials, a strong production JWT secret, live frontend/API URLs, production CORS configuration, and a two-user end-to-end verification against the deployed services. The repository includes automated frontend and backend tests, but those do not replace a live deployment check.
 
 ## Attribution
 

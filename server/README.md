@@ -1,6 +1,6 @@
-# FridgeChef recipe API
+# FridgeChef API
 
-This Express API proxies the public TheMealDB educational API. It keeps external API concerns on the server and returns JSON using the shape the FridgeChef client already understands. Authentication, MongoDB, pantry, favorites, and shopping-list persistence are separate team responsibilities and are not implemented here.
+The Express server provides authentication, private MongoDB-backed kitchen data, and a public TheMealDB recipe proxy.
 
 ## Setup
 
@@ -10,39 +10,28 @@ Use Node.js 22 or newer. From `server/`:
 npm ci
 ```
 
-Optionally copy `.env.example` to `.env` and supply the values through your shell or hosting provider. Node.js does not load `.env` automatically in this project, so local PowerShell values can be set with `$env:PORT = "3000"`, for example.
+Copy `.env.example` to `.env`, then configure `MONGODB_URI` and a `JWT_SECRET` of at least 32 bytes. Keep `.env` private. `CLIENT_ORIGIN` defaults to `http://localhost:5173`, `PORT` defaults to `3000`, and `MEALDB_URL` defaults to TheMealDB's public V1 educational endpoint.
 
-Start the development server:
-
-```sh
-npm run dev
-```
-
-Run the automated tests:
-
-```sh
-npm test
-```
+Start the server with `npm run dev` or `npm start`. The server validates configuration and connects to MongoDB before listening.
 
 ## Routes
 
-All responses are JSON. Errors use `{ "error": "message" }`.
+All responses are JSON and errors use `{ "error": "message" }`.
 
-| Method | Route | Purpose |
-| --- | --- | --- |
-| GET | `/api/health` | Check whether the API is running |
-| GET | `/api/recipes/search?name=pasta` | Search recipes by name |
-| GET | `/api/recipes/:id` | Fetch a full recipe by numeric TheMealDB ID |
-| GET | `/api/recipes?ingredient=chicken breast` | Find recipe candidates by one ingredient |
+- `GET /api/health`
+- `GET /api/recipes/search?name=pasta`
+- `GET /api/recipes/:id`
+- `GET /api/recipes?ingredient=chicken breast`
+- `POST /api/auth/signup`
+- `POST /api/auth/login`
+- `GET` and `POST /api/pantry`; `PATCH` and `DELETE /api/pantry/:id`
+- `GET` and `POST /api/favorites`; `DELETE /api/favorites/:id`
+- `GET` and `POST /api/shopping`; `PATCH` and `DELETE /api/shopping/:id`
 
-Successful recipe responses preserve TheMealDB's `{ "meals": [...] }` format. A lookup that has no matching recipe returns `404`. Invalid or missing input returns `400`. An unavailable or malformed upstream service returns `502`.
+Pantry, favorites, and shopping routes require `Authorization: Bearer <token>`. Private records are scoped to the authenticated user and expose their MongoDB document identifier as `_id`, matching the frontend contract in `docs/API_CONTRACT.md`.
 
-## Environment
+Recipe responses preserve TheMealDB's `{ "meals": [...] }` format. Authentication responses contain `{ token, user }`. Private collections return arrays directly, and successful deletes return `204` without a response body.
 
-| Variable | Default | Meaning |
-| --- | --- | --- |
-| `PORT` | `3000` | Local HTTP port |
-| `CLIENT_ORIGIN` | `http://localhost:5173` | Frontend origin allowed by CORS |
-| `MEALDB_URL` | TheMealDB V1 educational URL | Upstream API base URL |
+## Tests
 
-Do not place secrets in client-side `VITE_` variables. TheMealDB's public educational endpoint does not require a secret key.
+Run `npm test` from this directory or `npm --prefix server test` from the repository root. The automated suites use injected services and models, so they do not require a live MongoDB connection or TheMealDB access.

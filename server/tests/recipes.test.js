@@ -26,6 +26,7 @@ async function startApi(service = {}) {
       ...service,
     },
     clientOrigin: 'http://localhost:5173',
+    jwtSecret: 'recipe-api-test-secret-that-is-at-least-32-bytes',
   })
   const server = app.listen(0)
   openServers.add(server)
