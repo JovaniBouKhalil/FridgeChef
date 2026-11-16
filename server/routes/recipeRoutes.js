@@ -7,6 +7,7 @@ export function createRecipeRouter({ mealDbService }) {
   const controller = createRecipeController({ mealDbService })
 
   // Keep the named route before /:id so "search" is not interpreted as an ID.
+  router.get('/discover', controller.discover)
   router.get('/search', controller.search)
   router.get('/', controller.filterByIngredient)
   router.get('/:id', controller.getById)

@@ -18,8 +18,11 @@ The teacher PDFs were reviewed as project requirements and course references. Th
 | Chapter 20 pp. 12–14: auth state, provider, expiry | `src/auth/AuthProvider.jsx`, persisted token, `auth:expired` listener and cleanup |
 | Chapter 20 pp. 16–17: dev/prod environment | `.env.example`, ignored actual env files, configurable API origins, deployment instructions |
 | Final capstone: test, README, responsive UI, client routing | Vitest/RTL + desktop/mobile Playwright tests, root README, CSS breakpoints and React Router |
+| Chapter 21 pp. 18–20: throttling and security audit | Helmet, API/login rate limits, bounded input, and measured findings in `SECURITY.md` |
+| Chapter 22 p. 18: tests and performance evidence | Passing suites, production build comparison, and Lighthouse reports in `PERFORMANCE.md` |
+| Chapter 23 pp. 3, 6–11: hosting, config, CI | Vercel rewrite, Render Blueprint, GitHub Actions, and `docs/DEPLOYMENT.md`; actual publication remains pending account setup |
 
-Chapters 16 and 18 describe the team's Express/Mongoose backend. This branch prepares its integration; it does not implement backend work assigned to other members.
+Chapters 16 and 18 appear in the integrated Express/Mongoose backend in `server/`. The full-stack routes are implemented; live database and hosted-service acceptance checks still need completion.
 
 ## Screen flow
 
@@ -54,6 +57,8 @@ Protected navigation preserves the requested destination. A 401 from a private A
 
 ## Layout / wireframes
 
+The finalized screen-by-screen wireframes, navigation, and database field types are in [DESIGN.md](DESIGN.md).
+
 Desktop discovery:
 
 ```text
@@ -81,7 +86,7 @@ The responsive suite exercises all eight main routes, including the later Featur
 - `KitchenProvider` owns private resource hooks and mutations. It is keyed by session; changing users or logging out drops previous user data.
 - `useApi` handles one REST collection, cancels obsolete requests, and reloads after mutations.
 - `useRecipes` owns recipe search requests, loading/error state, and cleanup when filters change.
-- `api/client.js` is the only module that calls `fetch`. Separate origins keep the bearer token away from TheMealDB.
+- `api/client.js` is the only frontend module that calls `fetch`. Public recipe requests omit the token; the Express service calls TheMealDB on the server.
 - Local form/filter state stays in its screen or component. Shared kitchen resources use context because navigation, recipes, and multiple screens consume them.
 - The demo uses `fridgechef.demoKitchen.v1` in localStorage and `fridgechef.demo` in sessionStorage. Production account data is loaded from the API, never the demo key.
 
@@ -93,11 +98,11 @@ The [42-prompt review](UI_UX_PROMPT_REVIEW.md) records the selected improvements
 
 `Reveal` uses IntersectionObserver for a short, one-time panel entrance. Its default is visible content, so missing observers never hide a screen. The styles live in `client/src/interactions.css`, after the main page styles. These initial refinements use browser APIs and keep all existing API/auth boundaries intact.
 
-The later user-supplied Dish Orbit component is integrated as a separate, lazy-loaded Featured route. It adds GSAP, Lucide and a typed TSX UI component, with Tailwind/shadcn-compatible tooling available alongside the existing JavaScript screens. The [integration guide](DISH_ORBIT_CAROUSEL.md) explains the differences from the original component, setup, props and cleanup. Carousel save actions still use the same auth and kitchen contexts; there is no separate account store.
+The Featured route is lazy-loaded and uses ordinary JavaScript/JSX, React state, CSS keyframes, and the shared SVG icon component. The [integration guide](DISH_ORBIT_CAROUSEL.md) explains data loading, props, controls, and reduced motion. Carousel save actions use the same auth and kitchen contexts as the other pages.
 
-## Proposed database fields for teammates
+## Implemented database fields
 
-These follow the submitted proposal; implementation remains with the backend team.
+The integrated models follow the proposal. See [DESIGN.md](DESIGN.md) for complete types, indexes, and validation.
 
 | Collection | Fields | Ownership / uniqueness |
 | --- | --- | --- |

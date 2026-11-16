@@ -10,14 +10,17 @@ const favoriteSchema = new mongoose.Schema({
   recipeId: {
     type: String,
     required: true,
+    match: /^\d{1,10}$/,
   },
   recipeName: {
     type: String,
     required: true,
     trim: true,
+    maxlength: 200,
   },
   recipeImage: {
     type: String,
+    maxlength: 2048,
   },
 });
 

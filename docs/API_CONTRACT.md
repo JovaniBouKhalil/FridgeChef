@@ -1,6 +1,6 @@
 # Frontend ↔ backend agreement
 
-This is the proposed contract for the team to implement in the existing `server/` scaffold. It documents the frontend's actual requests; it does not mean these backend routes exist yet. Change the client and this agreement together if the backend team chooses different paths or shapes.
+This contract describes the implemented Express routes and the frontend's actual requests. Change the client, server, tests, and this agreement together when changing paths or payloads.
 
 ## Shared behavior
 
@@ -14,6 +14,7 @@ This is the proposed contract for the team to implement in the existing `server/
 - Missing/invalid/expired JWT: HTTP 401. The API client dispatches `auth:expired`, clears the local session, and redirects private views to login.
 - Invalid credentials at login: HTTP 401 with a generic message. Login requests do not expire another session.
 - Invalid input: HTTP 400. Duplicate email/ingredient: HTTP 409. A document absent or owned by another user: HTTP 404.
+- Rate limits return HTTP 429 with a JSON error and `Retry-After`: 300 API requests per IP per 15 minutes, with an additional limit of five failed logins. Successful logins are not counted against the failed-login limit.
 - CORS must accept `CLIENT_ORIGIN`, the `Authorization` and `Content-Type` headers, and GET/POST/PATCH/DELETE/OPTIONS methods.
 
 ## Authentication
@@ -29,7 +30,7 @@ Example signup:
 { "name": "Jovani", "email": "jovani@example.com", "password": "an-example-only" }
 ```
 
-The frontend requires a trimmed name of 2+ characters, a valid email, and a signup password of at least 8 characters. Validate these again on the server. Hash passwords with bcrypt; never return or store the plaintext password in the browser. Return a signed JWT and public user details from both routes, matching Chapter 19's `/signup` and `/login` and Chapter 20's auth provider.
+Signup requires a trimmed name of 2–100 characters, a valid email of at most 254 characters, and a password of at least 8 characters and at most 72 UTF-8 bytes. The server validates these fields, hashes passwords with bcrypt, and returns a signed JWT plus public user details. Passwords and hashes are never included in the browser's stored profile.
 
 The frontend stores the JWT and user profile in `fridgechef.token` and `fridgechef.user` in localStorage, following the classroom approach. Logout clears both and unmounts all private kitchen state. A saved token only controls the visible client route; the API remains the authority on identity and access. No JWT secret belongs in a `VITE_` value.
 
@@ -60,7 +61,7 @@ The frontend stores the JWT and user profile in `fridgechef.token` and `fridgech
 { "_id": "a-mongodb-id", "recipeId": "52771", "recipeName": "Spicy Arrabiata Penne", "recipeImage": "https://www.themealdb.com/images/media/meals/ustsqw1468250014.jpg" }
 ```
 
-`recipeImage` is optional metadata; recipe details are loaded by recipe ID. Enforce uniqueness on `(userId, recipeId)`. The DELETE ID is the favorite document `_id`, not the recipe ID.
+`recipeId` contains 1–10 digits; `recipeName` contains 1–200 trimmed characters. `recipeImage` is optional HTTP/HTTPS metadata of at most 2,048 characters; recipe details are loaded by recipe ID. The database enforces uniqueness on `(userId, recipeId)`. The DELETE ID is the favorite document `_id`, not the recipe ID.
 
 ## Shopping items
 
@@ -79,17 +80,20 @@ The frontend stores the JWT and user profile in `fridgechef.token` and `fridgech
 
 ## Recipe provider
 
-Public recipe requests currently go directly to `VITE_MEALDB_URL` through the shared JSON request client. They **never receive the private bearer token**. The [official V1 API](https://www.themealdb.com/api.php) supplies:
+Public recipe requests use `publicApiFetch` and the same `VITE_API_URL` as the rest of the application. They **never receive the private bearer token**. Express calls the educational TheMealDB service configured by the server's `MEALDB_URL`; the frontend has no separate provider-origin setting.
 
-| Purpose | Path |
-| --- | --- |
-| Name search / discovery | `/search.php?s=<name>` |
-| Full recipe | `/lookup.php?i=<id>` |
-| Single ingredient candidates | `/filter.php?i=<ingredient>` |
+| Purpose | Express endpoint | TheMealDB request |
+| --- | --- | --- |
+| Initial discovery | `GET /api/recipes/discover` | `/search.php?s=` |
+| Name search | `GET /api/recipes/search?name=<name>` | `/search.php?s=<name>` |
+| Full recipe | `GET /api/recipes/:id` | `/lookup.php?i=<id>` |
+| Single ingredient candidates | `GET /api/recipes?ingredient=<ingredient>` | `/filter.php?i=<ingredient>` |
+
+Responses preserve `{ "meals": [...] }`. Missing search/ingredient values return 400; an unknown recipe ID returns 404; upstream failures return a safe 502 error. Express bounds upstream requests with a timeout. The Featured page also loads full recipes through this API in normal mode. Fixture contents are used only after explicit demo selection or in tests.
 
 The service normalizes the 20 `strIngredientN`/`strMeasureN` slots in each full recipe. Pantry recommendations collect candidates for up to five unique pantry names, keep at most 24 distinct candidates, fetch full details in batches of six, then rank by the percentage of ingredient names present. It is a bounded candidate selection, not an exhaustive search of the entire database. Typed name searches rank within the returned name results when pantry matches are enabled. Category chips filter the loaded result set.
 
-If the backend team proxies TheMealDB later, keep this behavior in `client/src/api/recipes.js` and point recipe calls at those agreed public endpoints. The screens should not need changes.
+Ingredient matching and recipe ranking remain in `client/src/utils/ingredients.js`; external HTTP behavior lives in `server/services/mealDbService.js`. The UI does not contain provider credentials or duplicate upstream fetch code.
 
 ## Two-user handoff check
 

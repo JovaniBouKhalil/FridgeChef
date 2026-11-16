@@ -1,81 +1,38 @@
-# Dish Orbit Carousel integration
+﻿# Featured recipe carousel
 
-Open `/featured`, or choose **Featured recipes** from discovery. The route is public; saving a recipe uses the existing login/demo rules. Five actual recipes from the existing TheMealDB snapshot provide matching photos, ingredients, videos, IDs and working links to full recipe details.
+The Featured route uses the course stack: JavaScript/JSX, React hooks, browser events, and plain CSS. The earlier supplied component was adapted to this stack; its extra language, animation, utility, and icon tooling has been removed from the application dependencies.
 
-## Files and default paths
+## Files
 
-| Purpose | Path |
+| Purpose | File |
 | --- | --- |
-| Reusable typed component | `client/src/components/ui/dish-orbit-carousel.tsx` |
-| Component styles | `client/src/components/ui/dish-orbit-carousel.css` |
-| Supplied geometry/navigation helpers | `client/src/components/ui/dish-orbit-carousel.utils.ts` |
-| Usage wrapper | `client/src/components/ui/demo.tsx` |
-| App integration and real recipe actions | `client/src/pages/FeaturedRecipesPage.jsx` |
-| Tailwind utilities/theme | `client/src/tailwind.css` |
-| Existing application styles | `client/src/index.css`, `App.css`, `interactions.css` |
-| Shared shadcn class helper | `client/src/lib/utils.ts` |
-| shadcn generator configuration | `client/components.json` |
+| Route and API loading | `client/src/pages/FeaturedRecipesPage.jsx` |
+| Reusable carousel | `client/src/components/ui/dish-orbit-carousel.jsx` |
+| Navigation / SVG helpers | `client/src/components/ui/dish-orbit-carousel.utils.js` |
+| Layout, motion, mobile rules | `client/src/components/ui/dish-orbit-carousel.css` |
+| Icons | `client/src/components/Icon.jsx` |
+| Browser checks | `client/e2e/featured.spec.js` |
 
-The project previously placed all components in `client/src/components`. The new `ui` subfolder separates the reusable visual component from pantry/authentication/domain components. It is the conventional target for shadcn-generated UI source. React itself does not require this folder; the useful part is a consistent location and import alias. Here `@/components/ui` resolves to `client/src/components/ui`, not a folder at repository root.
+## Data and interaction
 
-## Setup already performed
+The page stores only a curated list of real TheMealDB recipe IDs and display accents. A cleaned-up effect loads their complete recipes through `getRecipe` and the Express API. Normal mode does not display fixture recipe contents; the explicit demo mode uses the local snapshots. Failed requests show retry feedback.
 
-The application remains React + Vite. Existing screens stay JavaScript/JSX, with TypeScript support added for the supplied component and shared typed utilities.
+The carousel receives `dishes`, optional `backdrop`, optional `loop`, and callbacks for recipe navigation, videos, selection, and the save action. `useState` owns the selected index and Overview/Ingredients tab; props provide the recipe contents and actions. `useRef` holds pointer coordinates and thumbnail elements. An effect scrolls the selected thumbnail into view without moving the page.
 
-```sh
-cd client
-npm install gsap lucide-react clsx tailwind-merge
-npm install -D typescript typescript-eslint @types/node tailwindcss @tailwindcss/vite
-```
+Previous/Next, thumbnails, ArrowLeft/ArrowRight, Home/End, and horizontal swipes change recipes. Tabs implement their own arrow and Home/End keys. Only the active slide is exposed to assistive technology. View recipe opens the actual details route, video links allow known HTTPS YouTube hosts, and saving uses the existing JWT/kitchen contexts.
 
-Vite's existing React plugin transpiles TSX; `tsconfig.json` enables strict checking of TS/TSX files, JSON imports, DOM types and the `@/*` path alias. `npm run typecheck` performs the separate compiler check. Existing JavaScript files are allowed without turning this task into a conversion of the whole course project. ESLint checks both JS/JSX and TS/TSX.
+CSS keyframes animate the entering plate and title spans. A reduced-motion media query disables those animations. There is no scroll takeover, animation timer, or extra event listener to leak on route changes. The route remains lazy-loaded with React `lazy` and `Suspense`.
 
-Tailwind uses its Vite plugin. `src/tailwind.css` imports theme and utility layers, with no Preflight reset, so adding tooling does not reset the existing forms, layout or typography. It defines the existing FridgeChef colors as Tailwind theme tokens. The carousel itself uses scoped CSS for its geometry and animation layout; installing Tailwind is not a reason to rewrite the previous screens.
+The CSS uses a three-column desktop composition, two columns at medium container widths, and one column on phones. Controls retain 44px targets, and thumbnails scroll horizontally inside their strip.
 
-The shadcn-compatible structure is configured manually in `components.json`: TSX, Lucide icons, the CSS entry, and aliases for components, UI, hooks and utilities. No shadcn widgets were needed by the supplied component. Future widgets can be generated from `client/` using, for example:
+## Assets and checks
+
+Local images and demo contents are attributed to TheMealDB. The local Outfit font has its OFL license under `client/public/fonts`; backdrop attribution is under `client/public/images/orbit/README.md`.
 
 ```sh
-npx shadcn@latest add button
-```
-
-For a new project without this configuration, follow the [official shadcn Vite setup](https://ui.shadcn.com/docs/installation/vite), run `npx shadcn@latest init`, and configure the aliases and Tailwind plugin as documented. The [official Tailwind Vite guide](https://tailwindcss.com/docs/installation/using-vite) describes the plugin setup. These generator commands are instructions for future additions; the integration does not require running init again.
-
-## Data and actions
-
-- `dishes` is a stable array built from `demoMeals.json`, the same real recipe snapshots used elsewhere in the app. Display titles are shortened for the carousel, while thumbnail labels and destination IDs retain the actual recipe names.
-- `onOrder`, retained from the supplied component's prop name, opens `/recipes/:id`. Its visible label is **View recipe**; FridgeChef does not implement food ordering.
-- `onPlay` opens the selected recipe's HTTPS YouTube link in a separate tab. The control is shown only when a video exists.
-- `renderAction` renders the app's save button. It delegates to `KitchenProvider.toggleFavorite`, shows genuine pending/errors, and redirects guests to login with `/featured` as the return destination.
-- `onChange` remains available to component consumers. The component owns its selected index, information tab and gesture state.
-- Optional `rating`, `chef` and `kitchen` metadata remain supported by the reusable component, but the app supplies actual ingredient counts and TheMealDB attribution. It does not invent community ratings or present example chefs as real authors.
-
-## Animation and responsive behavior
-
-The original orbit pivot, arc generation, shortest-direction calculation, opposing title wipes, plate swing and color morph are retained. The layout uses a responsive grid instead of shrinking a fixed 960px canvas, which keeps text and controls legible. Controls remain at least 44px. Narrow containers stack the image, title and information card; the thumbnail row remains horizontally scrollable.
-
-Arrow buttons, thumbnail buttons, Left/Right keys, Home/End and horizontal mouse/touch swipes change the selected recipe. The Overview/Ingredients tabs have their own Left/Right and Home/End behavior. Only the active recipe is exposed to assistive technology. Reduced motion switches slides immediately and stops decorative GSAP movement.
-
-Each slide animation uses [GSAP context cleanup](https://gsap.com/docs/v3/GSAP/gsap.context()/). Timelines are killed/reverted on replacement, preference change or unmount. This also handles StrictMode's mount/cleanup cycle. Thumbnail scrolling stays within its own strip.
-
-`scrollDriven` is an optional desktop-only presentation mode for consumers who want the original pinned-scroll showcase. `height` sets its stage height and `loop` controls wrapping. Touch devices and reduced-motion users always retain normal scrolling. The app's usage wrapper explicitly sets `scrollDriven={false}` so this optional showcase does not trap users trying to reach pantry navigation or the page footer.
-
-The entire Featured page is lazy loaded. The GSAP/Lucide/carousel code and component CSS are loaded when opening this route, rather than being part of the normal discovery/pantry startup bundle.
-
-## Assets and attribution
-
-- Recipe photos/data: existing [TheMealDB](https://www.themealdb.com) snapshots and local images. They match the full recipe pages.
-- The supplied Unsplash wall backdrop is extracted into `client/public/images/orbit/kitchen-wall.webp`; its source note is alongside the asset. No remote image dependency is required to open the featured view.
-- The supplied Outfit font is extracted into `client/public/fonts/outfit-latin.woff2`. The complete SIL Open Font License and upstream copyright notice are included in `client/public/fonts/OFL-Outfit.txt`; [upstream license](https://github.com/Outfitio/Outfit-Fonts/blob/main/OFL.txt). Pass `fontSrc={null}` to use the host font.
-- Icons use Lucide React. `cn` uses clsx and tailwind-merge, following the configured shadcn source structure.
-
-## Verification
-
-```sh
-npm run typecheck
 npm run lint
 npm test
-npm run build
-npm run test:e2e
+npm run test:e2e -- --workers=2
 ```
 
-The browser suite checks carousel entry/exit, settled animations, arrows/thumbnails/keyboard, information tabs, real saved-recipe destinations, guest login return, touch swipes, reduced motion and 44px controls. `/featured` is also included in the 320/360/430/768px responsive route checks. The unit suite covers the original navigation/geometry helpers alongside the existing frontend tests.
+The browser suite exercises arrows, keyboard boundaries, touch/mouse swipes, tabs, reduced motion, save/detail actions, guest login return, responsive layout, and route cleanup on desktop and mobile. The production build comparison is recorded in `PERFORMANCE.md`.

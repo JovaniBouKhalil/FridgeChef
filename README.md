@@ -1,111 +1,149 @@
-# FridgeChef
+﻿# FridgeChef
 
-Make more of what is already in your fridge. A web development capstone by **Jovani Bou Khalil, Ralph Alpha, and Mariam Salloum**.
+**Frontend URL:** Pending deployment
 
-## Current status
+**API URL:** Pending deployment
 
-FridgeChef is integrated as a React frontend and Express REST API with MongoDB/Mongoose persistence, bcrypt/JWT authentication, private pantry/favorites/shopping routes, and a public TheMealDB recipe proxy. Public recipe browsing in the frontend currently uses TheMealDB directly, while account and kitchen requests use the Express API.
+Make more of what is already in your fridge. A full-stack capstone by **Jovani Bou Khalil, Ralph Alpha, and Mariam Salloum**.
 
-You can review the frontend immediately using the explicitly labeled **demo kitchen**. Open Sign in → Try demo kitchen. It uses a sample pantry and eight recipe snapshots; changes persist in a separate browser storage key. It never creates an account or simulates a JWT. Exit demo before testing real authentication.
+FridgeChef helps students and home cooks find recipes using their pantry, compare missing ingredients, save favorites, and plan shopping. The implementation follows the supplied JavaScript/React and Node/Express course chapters.
 
-## Run the frontend
+## Features
 
-Use Node.js 22.12+ or Node.js 24 LTS and npm.
+- Signup, login, logout, expiring JWT sessions, and protected pantry/saved/shopping screens.
+- Private pantry: create, search, edit quantities, and delete with confirmation.
+- TheMealDB recipe discovery, name search, details, and category filters through the Express API.
+- Ingredient alias normalization and recipe ranking by the share of ingredient names available in the pantry.
+- Recipe details with quantities, available/missing ingredients, instructions, and original/video links.
+- Saved recipes and a shopping checklist generated from missing ingredients, with duplicate prevention.
+- Featured recipe carousel built with React state, JSX, CSS animations, and the existing SVG icon component.
+- Desktop and mobile layouts, keyboard navigation, reduced motion, loading/error/retry states, and form feedback.
+- An explicitly labeled demo kitchen with local sample data for reviewing the interface without database credentials.
+
+Matching compares ingredient names. It does not infer quantities, nutrition, allergies, or cooking times. The free provider supports bounded ingredient-based candidate searches, rather than an exhaustive search of every recipe.
+
+## Stack and architecture
+
+Application code uses **HTML, plain CSS, JavaScript/JSX, React, React Router, Vite, Node.js, Express, MongoDB/Mongoose, bcrypt, and JWT**. CORS, Helmet, and express-rate-limit implement the API controls taught in Chapters 17 and 21. Vitest, React Testing Library, and Playwright are development verification tools. All application source files are JavaScript/JSX; the carousel uses the same stack as the other screens.
+
+```mermaid
+flowchart LR
+  React[React components and hooks] --> Client[Shared fetch client]
+  Client --> API[Express REST API]
+  API --> Auth[JWT and ownership checks]
+  Auth --> DB[(MongoDB / Mongoose)]
+  API --> Recipes[Recipe service]
+  Recipes --> MealDB[TheMealDB API]
+```
+
+The API owns password hashing, signing secrets, database credentials, and per-user queries. Public recipe calls omit the private bearer token. Private data reloads from MongoDB after writes; logout or account changes discard the previous user's React state.
+
+```text
+client/
+  src/api/          Shared HTTP and recipe services
+  src/auth/         Auth provider and protected routes
+  src/components/   Reusable controls, cards, and featured carousel
+  src/context/      Shared kitchen state and API mutations
+  src/hooks/        Loading, error, request cleanup, and reload hooks
+  src/pages/        Route screens
+  src/utils/        Validation, storage parsing, and ingredient matching
+  e2e/              Desktop/mobile browser checks
+server/
+  config/           MongoDB and JWT configuration
+  controllers/      Public recipe request handling
+  middleware/       Authentication and safe error responses
+  models/           User-owned Mongoose schemas and indexes
+  routes/           Authentication, pantry, favorites, shopping, recipes
+  services/         TheMealDB HTTP integration
+  test/, tests/     Backend request and schema tests
+scripts/            Live deployment acceptance check
+```
+
+## Local setup
+
+Use **Node.js 24 and npm**. Clone this repository, then install each side separately:
 
 ```sh
 git clone https://github.com/JovaniBouKhalil/FridgeChef.git
 cd FridgeChef
-cd client
-npm ci
+npm --prefix client ci
+npm --prefix server ci
 ```
 
-Copy `client/.env.example` to `client/.env`. In PowerShell, from `client/`:
+Copy the example configuration files. From the repository root in PowerShell:
 
 ```powershell
-Copy-Item .env.example .env
+Copy-Item client/.env.example client/.env
+Copy-Item server/.env.example server/.env
 ```
 
-In macOS/Linux shells, use `cp .env.example .env`. Then:
+In macOS/Linux shells, use `cp` for these two copies. Set the private values in `server/.env`:
+
+| Variable | Local value / purpose |
+| --- | --- |
+| `MONGODB_URI` | Working local MongoDB or Atlas URI for the team's database |
+| `JWT_SECRET` | Random secret containing at least 32 bytes |
+| `JWT_EXPIRES_IN` | `1d` by default |
+| `CLIENT_ORIGIN` | `http://localhost:5173` |
+| `PORT` | `3000` |
+| `TRUST_PROXY_HOPS` | `0` locally, `1` on Render |
+| `MEALDB_URL` | Public educational TheMealDB endpoint from the example |
+
+The frontend example sets `VITE_API_URL=http://localhost:3000`. Vite variables are public; private database/JWT values belong only on the server. Restart Vite after changing frontend environment values.
+
+Start the API in one terminal:
 
 ```sh
+cd server
 npm run dev
 ```
 
-Open the URL printed by Vite (normally http://localhost:5173). Public discovery needs internet access to TheMealDB. The demo kitchen's sample recipes and images work without that service after the local application has loaded.
-
-Run the backend in a second terminal from `server/` using `npm ci` then `npm run dev`. Copy `server/.env.example` to `server/.env` and configure `MONGODB_URI` plus a `JWT_SECRET` of at least 32 bytes. Set `VITE_API_URL` to the backend origin, normally `http://localhost:3000`, and configure the server to accept `CLIENT_ORIGIN=http://localhost:5173`. Restart Vite after changing client environment variables.
-
-## Features
-
-- React Router pages for discovery, login, signup, pantry, recipe details, saved recipes, shopping list, and missing pages.
-- Controlled signup/login forms with validation, password visibility, return-to-page navigation, and API error messages.
-- Auth context, persisted bearer token, protected views, logout, and automatic logout on authenticated HTTP 401 responses.
-- Pantry ingredient creation, quantity editing, deletion confirmation, search, and duplicate checks.
-- TheMealDB recipe search, category filtering within results, details, ingredient measurements, and original recipe/video links.
-- Ingredient matching and ranking with explicit missing ingredients; common ingredient aliases are supported. Quantities are not evaluated.
-- Saved recipes and a shopping checklist with deduplicated missing ingredients, check-off, removal, and clearing picked-up items.
-- Responsive desktop sidebar, mobile brand header and bottom navigation, 44px controls, readable inputs, keyboard labels, reduced-motion support, and loading/error/empty states. The mobile pantry opens its add form on demand so ingredients remain easy to reach.
-- An isolated demo kitchen for frontend review before the team's API is available.
-- A lazy-loaded **Featured recipes** carousel at `/featured`, adapted from the supplied Dish Orbit component, with orbital transitions, keyboard/touch controls, real recipe links, videos and saved-recipe actions.
-- Keyboard-accessible recipe suggestions, removable recent searches, field feedback on blur with first-error focus, inline pending indicators, stable recipe skeletons, saved-heart feedback, clickable recipe-title breadcrumbs, a mobile-safe back-to-top control, and restrained one-time panel entrances. Motion respects reduced-motion preferences; the implementation remains React hooks and plain CSS.
-
-## Stack and architecture
-
-The core frontend uses **React, JavaScript/JSX, React Router, Vite, browser fetch, and plain CSS**, following the components, hooks, forms, context, and integration patterns in Chapters 12–15 and 20. The later supplied carousel adds a typed TSX component, GSAP animation and Lucide icons, plus Tailwind support and a shadcn-compatible source folder/configuration. Existing screens remain JavaScript. There is no additional application framework or state management library. Vitest, React Testing Library, and Playwright are development-only verification tools.
-
-The agreed full-stack architecture is React → Express REST API → MongoDB/Mongoose, with bcrypt/JWT on the server. Public recipe data comes from TheMealDB; the frontend currently requests it directly using its public educational API. Database credentials, JWT signing, password hashing, ownership enforcement, and CORS belong on the server.
-
-```text
-client/
-  src/
-    api/          # Shared request client and TheMealDB recipe service
-    auth/         # AuthProvider, auth hook, protected route
-    components/   # Layout, recipe cards, forms, feedback, icons
-    context/      # User kitchen state and API-backed mutations
-    data/         # Explicit demo fixtures
-    hooks/        # useApi and recipe search effects
-    pages/        # Route-level screens
-    utils/        # Ingredient matching and storage parsing
-  e2e/            # Desktop/mobile browser tests
-server/           # Express API, authentication, recipe proxy, and MongoDB models
-docs/
-  API_CONTRACT.md  # Exact endpoint and payload agreement for the team
-  FRONTEND_GUIDE.md # Course mapping, screen flow, and manual checks
-```
-
-Read the [backend integration contract](docs/API_CONTRACT.md) and the [frontend/course guide](docs/FRONTEND_GUIDE.md) before changing API shapes.
-
-The [UI/UX prompt review](docs/UI_UX_PROMPT_REVIEW.md) records the decision on all 42 supplied prompts and the implemented selection. Optional cooking timelines and password recovery are deferred.
-
-The [Dish Orbit integration guide](docs/DISH_ORBIT_CAROUSEL.md) covers the supplied component, added tooling, file paths, props, data, animation cleanup and asset attribution.
-
-## Verify the frontend
-
-From `client/`:
+Start the frontend in another:
 
 ```sh
-npm run lint
-npm run typecheck
-npm test
-npm run build
-npx playwright install chromium
-npm run test:e2e
+cd client
+npm run dev
 ```
 
-The unit/component suite checks ingredient ranking, token headers, 204 responses, 401 expiry, route protection, form validation, pantry edits, shopping deduplication, and mocked login integration. The browser suite checks discovery, pantry CRUD, saved recipes, shopping checkboxes, and API session expiry on desktop and mobile. Browser tests mock external APIs so results do not depend on network availability. `npm run format` formats the source.
+Open the Vite URL, normally `http://localhost:5173`. The backend connects to MongoDB before it starts listening. Normal account and recipe features require the configured API; live recipes also need TheMealDB access.
 
-Interaction tests also cover keyboard suggestion selection, search history removal, first-invalid-field focus, real pending/error states, recipe breadcrumbs, reduced motion, observer fallback, and back-to-top placement above mobile navigation.
+For interface review without backend credentials, choose **Sign in → Try demo kitchen**. Demo mode has eight recipe snapshots and separate browser storage, never creates a real account, and never simulates a JWT. Exit demo before verifying authentication or persistence.
 
-Responsive checks cover all eight main routes, including `/featured`, at 320, 360, 430 and 768px with long ingredient names, checking touch targets, input sizes, mobile pantry access and horizontal overflow. Carousel tests also cover keyboard and touch navigation, tabs, animation cleanup, real recipe actions and guest login return.
+## Verification
 
-If the Playwright browser download is unavailable but Chrome is installed, set `PLAYWRIGHT_CHANNEL=chrome` before running the browser tests. In PowerShell: `$env:PLAYWRIGHT_CHANNEL = 'chrome'`, then `npm run test:e2e`.
+From the repository root:
 
-## Deployment and remaining team requirements
+```sh
+npm --prefix client run lint
+npm --prefix client test
+npm --prefix server test
+```
 
-Build the frontend with `npm run build` and publish `client/dist`. Set `VITE_API_URL` to the reachable HTTPS API origin **before building**. Vite replaces `VITE_` values at build time: they are public, so keep secrets exclusively in server environment settings. The app uses browser routing; configure the host to serve `index.html` for unknown application paths. `client/public/_redirects` provides this fallback for Netlify. Other hosts need equivalent configuration.
+For browser checks, from `client/`:
 
-Deployment still requires real MongoDB credentials, a strong production JWT secret, live frontend/API URLs, production CORS configuration, and a two-user end-to-end verification against the deployed services. The repository includes automated frontend and backend tests, but those do not replace a live deployment check.
+```sh
+npx playwright install chromium
+npm run test:e2e -- --workers=2
+```
+
+Alternatively use an installed Chrome browser: in PowerShell set `$env:PLAYWRIGHT_CHANNEL = 'chrome'` before the browser command. The automated tests use fixtures/injected models; they do not need a local `.env` or MongoDB connection. Browser API mocks are test infrastructure. Normal application mode uses the real API.
+
+A production build needs the actual public HTTPS API origin in `VITE_API_URL`, then `npm run build` from `client/`. Output is `client/dist`. See the deployment guide before publishing; a missing or localhost production API origin is rejected during the build.
+
+Checks run on pushes and pull requests through GitHub Actions. Tests cover ingredient ranking, auth headers/expiry, validation, owner-scoped CRUD, duplicate prevention, upstream errors, security headers/rate limits, and desktop/mobile interactions. Responsive checks include 320, 360, 430, and 768px viewports. The final milestone report records the latest verified results.
+
+## Deployment and submission evidence
+
+Follow [Chapter 23 deployment](docs/DEPLOYMENT.md) for **Vercel + Render + MongoDB Atlas**. The repository includes the Vercel SPA rewrite, Render Blueprint, CI workflow, and `scripts/verify-deployment.mjs`. Production still requires connected hosting accounts, private database settings, two reachable public URLs, and the live two-user check. Update the pending URL entries above after successful publication.
+
+- [Requirements and milestone audit](docs/CAPSTONE_MILESTONES.md): exact chapter references, implementation evidence, and outstanding live checks.
+- [Final wireframes and database schema](docs/DESIGN.md): every main screen, navigation arrows, fields, types, indexes, and references.
+- [API contract](docs/API_CONTRACT.md) and [frontend/course guide](docs/FRONTEND_GUIDE.md): routes, payloads, and course patterns.
+- [Security review](SECURITY.md): three measured before/fix/after findings.
+- [Performance evidence](PERFORMANCE.md): production build and Lighthouse comparison.
+- [Presentation outline](docs/PRESENTATION.md): a seven-minute walkthrough and Q&A preparation.
+- [Featured carousel](docs/DISH_ORBIT_CAROUSEL.md): plain React/CSS implementation details.
 
 ## Attribution
 
-Recipe data and food photographs are from [TheMealDB](https://www.themealdb.com), using its [documented educational API](https://www.themealdb.com/api.php). The eight local snapshots and matching photos support the clearly labeled demo kitchen; live mode requests live data. Recipe matching is ingredient-name assistance and does not assess quantities, allergies, or nutrition.
+Recipe contents and food photographs come from [TheMealDB](https://www.themealdb.com), using its public educational API. Eight local snapshots and images support the clearly labeled demo kitchen; normal mode loads live recipe contents through Express. The local Outfit font includes its license in `client/public/fonts/`. Backdrop attribution is in `client/public/images/orbit/README.md`.

@@ -14,7 +14,7 @@ function normalizeEmail(value) {
   }
 
   const email = value.trim().toLowerCase();
-  return EMAIL_PATTERN.test(email) ? email : null;
+  return email.length <= 254 && EMAIL_PATTERN.test(email) ? email : null;
 }
 
 function createPublicUser(user) {
@@ -59,9 +59,9 @@ export function createAuthRouter({
     const email = normalizeEmail(body.email);
     const password = body.password;
 
-    if (name.length < 2) {
+    if (name.length < 2 || name.length > 100) {
       return res.status(400).json({
-        error: "Name must be at least 2 characters.",
+        error: "Name must be between 2 and 100 characters.",
       });
     }
 

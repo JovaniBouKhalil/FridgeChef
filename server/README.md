@@ -19,6 +19,7 @@ Start the server with `npm run dev` or `npm start`. The server validates configu
 All responses are JSON and errors use `{ "error": "message" }`.
 
 - `GET /api/health`
+- `GET /api/recipes/discover`
 - `GET /api/recipes/search?name=pasta`
 - `GET /api/recipes/:id`
 - `GET /api/recipes?ingredient=chicken breast`
@@ -31,6 +32,10 @@ All responses are JSON and errors use `{ "error": "message" }`.
 Pantry, favorites, and shopping routes require `Authorization: Bearer <token>`. Private records are scoped to the authenticated user and expose their MongoDB document identifier as `_id`, matching the frontend contract in `docs/API_CONTRACT.md`.
 
 Recipe responses preserve TheMealDB's `{ "meals": [...] }` format. Authentication responses contain `{ token, user }`. Private collections return arrays directly, and successful deletes return `204` without a response body.
+
+Helmet adds security headers. API requests are limited to 300 per IP per 15 minutes; five failed logins are permitted in that window before a JSON 429. Successful logins do not consume the failed-login allowance. Use `TRUST_PROXY_HOPS=0` locally and `1` behind Render's reverse proxy. Review [SECURITY.md](../SECURITY.md) for measured before/after evidence.
+
+Deploy using the root `render.yaml` and [Chapter 23 guide](../docs/DEPLOYMENT.md). MongoDB credentials and JWT secrets are configured privately on the host. The frontend calls these recipe routes rather than contacting TheMealDB itself.
 
 ## Tests
 

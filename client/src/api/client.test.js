@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { apiFetch, mealdbFetch, TOKEN_KEY } from './client'
+import { apiFetch, publicApiFetch, TOKEN_KEY } from './client'
 
 beforeEach(() => vi.stubGlobal('fetch', vi.fn()))
 
@@ -17,12 +17,15 @@ describe('shared API client', () => {
       }),
     )
   })
-  it('never sends the private token to the recipe provider', async () => {
+  it('never sends the private token on public recipe requests', async () => {
     localStorage.setItem(TOKEN_KEY, 'private-token')
     fetch.mockResolvedValue(
       new Response(JSON.stringify({ meals: [] }), { status: 200 }),
     )
-    await mealdbFetch('/search.php?s=pasta')
+    await publicApiFetch('/api/recipes/search?name=pasta')
+    expect(fetch.mock.calls[0][0]).toBe(
+      'http://localhost:3000/api/recipes/search?name=pasta',
+    )
     expect(fetch.mock.calls[0][1].headers.Authorization).toBeUndefined()
   })
   it('accepts a 204 delete without attempting to parse JSON', async () => {

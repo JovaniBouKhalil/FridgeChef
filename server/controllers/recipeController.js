@@ -10,6 +10,10 @@ function requiredQuery(value, fieldName) {
 
 export function createRecipeController({ mealDbService }) {
   return {
+    async discover(_request, response) {
+      const meals = await mealDbService.searchMealsByName('')
+      response.json({ meals })
+    },
     async search(request, response) {
       const name = requiredQuery(request.query.name, 'Recipe name')
       const meals = await mealDbService.searchMealsByName(name)

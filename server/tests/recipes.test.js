@@ -1,21 +1,21 @@
-import assert from 'node:assert/strict'
-import { afterEach, test } from 'node:test'
+import assert from "node:assert/strict";
+import { afterEach, test } from "node:test";
 
-import { createApp } from '../app.js'
+import { createApp } from "../app.js";
 
-const openServers = new Set()
+const openServers = new Set();
 
 afterEach(async () => {
   await Promise.all(
     [...openServers].map(
       (server) =>
         new Promise((resolve, reject) => {
-          server.close((error) => (error ? reject(error) : resolve()))
+          server.close((error) => (error ? reject(error) : resolve()));
         }),
     ),
-  )
-  openServers.clear()
-})
+  );
+  openServers.clear();
+});
 
 async function startApi(service = {}) {
   const app = createApp({
@@ -25,154 +25,173 @@ async function startApi(service = {}) {
       filterMealsByIngredient: async () => [],
       ...service,
     },
-    clientOrigin: 'http://localhost:5173',
-    jwtSecret: 'recipe-api-test-secret-that-is-at-least-32-bytes',
-  })
-  const server = app.listen(0)
-  openServers.add(server)
-  await new Promise((resolve) => server.once('listening', resolve))
-  const { port } = server.address()
-  return `http://127.0.0.1:${port}`
+    clientOrigin: "http://localhost:5173",
+    jwtSecret: "recipe-api-test-secret-that-is-at-least-32-bytes",
+  });
+  const server = app.listen(0);
+  openServers.add(server);
+  await new Promise((resolve) => server.once("listening", resolve));
+  const { port } = server.address();
+  return `http://127.0.0.1:${port}`;
 }
 
 const sampleMeal = {
-  idMeal: '52771',
-  strMeal: 'Spicy Arrabiata Penne',
-  strMealThumb: 'https://example.test/meal.jpg',
-}
+  idMeal: "52771",
+  strMeal: "Spicy Arrabiata Penne",
+  strMealThumb: "https://example.test/meal.jpg",
+};
 
-test('GET /api/health reports that the API is available', async () => {
-  const baseUrl = await startApi()
-  const response = await fetch(`${baseUrl}/api/health`)
+test("GET /api/health reports that the API is available", async () => {
+  const baseUrl = await startApi();
+  const response = await fetch(`${baseUrl}/api/health`);
 
-  assert.equal(response.status, 200)
-  assert.deepEqual(await response.json(), { status: 'ok' })
-})
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { status: "ok" });
+});
 
-test('GET /api/recipes/search searches TheMealDB by a trimmed name', async () => {
-  let receivedName
+test("GET /api/recipes/discover loads public discovery from TheMealDB", async () => {
+  let receivedName;
   const baseUrl = await startApi({
     searchMealsByName: async (name) => {
-      receivedName = name
-      return [sampleMeal]
+      receivedName = name;
+      return [sampleMeal];
     },
-  })
+  });
+  const response = await fetch(`${baseUrl}/api/recipes/discover`);
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { meals: [sampleMeal] });
+  assert.equal(receivedName, "");
+});
 
-  const response = await fetch(`${baseUrl}/api/recipes/search?name=%20pasta%20`)
+test("GET /api/recipes/search searches TheMealDB by a trimmed name", async () => {
+  let receivedName;
+  const baseUrl = await startApi({
+    searchMealsByName: async (name) => {
+      receivedName = name;
+      return [sampleMeal];
+    },
+  });
 
-  assert.equal(response.status, 200)
-  assert.deepEqual(await response.json(), { meals: [sampleMeal] })
-  assert.equal(receivedName, 'pasta')
-})
+  const response = await fetch(
+    `${baseUrl}/api/recipes/search?name=%20pasta%20`,
+  );
 
-test('GET /api/recipes/:id returns one full recipe', async () => {
-  let receivedId
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { meals: [sampleMeal] });
+  assert.equal(receivedName, "pasta");
+});
+
+test("GET /api/recipes/:id returns one full recipe", async () => {
+  let receivedId;
   const baseUrl = await startApi({
     getMealById: async (id) => {
-      receivedId = id
-      return sampleMeal
+      receivedId = id;
+      return sampleMeal;
     },
-  })
+  });
 
-  const response = await fetch(`${baseUrl}/api/recipes/52771`)
+  const response = await fetch(`${baseUrl}/api/recipes/52771`);
 
-  assert.equal(response.status, 200)
-  assert.deepEqual(await response.json(), { meals: [sampleMeal] })
-  assert.equal(receivedId, '52771')
-})
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { meals: [sampleMeal] });
+  assert.equal(receivedId, "52771");
+});
 
-test('GET /api/recipes filters recipes by a trimmed ingredient', async () => {
-  let receivedIngredient
+test("GET /api/recipes filters recipes by a trimmed ingredient", async () => {
+  let receivedIngredient;
   const baseUrl = await startApi({
     filterMealsByIngredient: async (ingredient) => {
-      receivedIngredient = ingredient
-      return [sampleMeal]
+      receivedIngredient = ingredient;
+      return [sampleMeal];
     },
-  })
+  });
 
   const response = await fetch(
     `${baseUrl}/api/recipes?ingredient=%20chicken%20breast%20`,
-  )
+  );
 
-  assert.equal(response.status, 200)
-  assert.deepEqual(await response.json(), { meals: [sampleMeal] })
-  assert.equal(receivedIngredient, 'chicken breast')
-})
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { meals: [sampleMeal] });
+  assert.equal(receivedIngredient, "chicken breast");
+});
 
 for (const path of [
-  '/api/recipes/search',
-  '/api/recipes/search?name=%20',
-  '/api/recipes',
-  '/api/recipes?ingredient=%20',
+  "/api/recipes/search",
+  "/api/recipes/search?name=%20",
+  "/api/recipes",
+  "/api/recipes?ingredient=%20",
 ]) {
   test(`${path} rejects a missing required query value`, async () => {
-    const baseUrl = await startApi()
-    const response = await fetch(`${baseUrl}${path}`)
+    const baseUrl = await startApi();
+    const response = await fetch(`${baseUrl}${path}`);
 
-    assert.equal(response.status, 400)
-    assert.match((await response.json()).error, /required/i)
-  })
+    assert.equal(response.status, 400);
+    assert.match((await response.json()).error, /required/i);
+  });
 }
 
-test('GET /api/recipes/:id rejects an invalid TheMealDB ID', async () => {
-  const baseUrl = await startApi()
-  const response = await fetch(`${baseUrl}/api/recipes/not-a-number`)
+test("GET /api/recipes/:id rejects an invalid TheMealDB ID", async () => {
+  const baseUrl = await startApi();
+  const response = await fetch(`${baseUrl}/api/recipes/not-a-number`);
 
-  assert.equal(response.status, 400)
-  assert.deepEqual(await response.json(), { error: 'Recipe ID must contain only digits.' })
-})
+  assert.equal(response.status, 400);
+  assert.deepEqual(await response.json(), {
+    error: "Recipe ID must contain only digits.",
+  });
+});
 
-test('GET /api/recipes/:id returns 404 when the recipe does not exist', async () => {
-  const baseUrl = await startApi()
-  const response = await fetch(`${baseUrl}/api/recipes/99999999`)
+test("GET /api/recipes/:id returns 404 when the recipe does not exist", async () => {
+  const baseUrl = await startApi();
+  const response = await fetch(`${baseUrl}/api/recipes/99999999`);
 
-  assert.equal(response.status, 404)
-  assert.deepEqual(await response.json(), { error: 'Recipe not found.' })
-})
+  assert.equal(response.status, 404);
+  assert.deepEqual(await response.json(), { error: "Recipe not found." });
+});
 
-test('upstream failures become a controlled 502 JSON response', async () => {
+test("upstream failures become a controlled 502 JSON response", async () => {
   const baseUrl = await startApi({
     searchMealsByName: async () => {
-      const error = new Error('private upstream detail')
-      error.status = 502
-      throw error
+      const error = new Error("private upstream detail");
+      error.status = 502;
+      throw error;
     },
-  })
+  });
 
-  const response = await fetch(`${baseUrl}/api/recipes/search?name=pasta`)
+  const response = await fetch(`${baseUrl}/api/recipes/search?name=pasta`);
 
-  assert.equal(response.status, 502)
+  assert.equal(response.status, 502);
   assert.deepEqual(await response.json(), {
-    error: 'The recipe service is currently unavailable. Please try again later.',
-  })
-})
+    error:
+      "The recipe service is currently unavailable. Please try again later.",
+  });
+});
 
-test('unknown API routes return a JSON 404', async () => {
-  const baseUrl = await startApi()
-  const response = await fetch(`${baseUrl}/api/does-not-exist`)
+test("unknown API routes return a JSON 404", async () => {
+  const baseUrl = await startApi();
+  const response = await fetch(`${baseUrl}/api/does-not-exist`);
 
-  assert.equal(response.status, 404)
-  assert.deepEqual(await response.json(), { error: 'Route not found.' })
-})
+  assert.equal(response.status, 404);
+  assert.deepEqual(await response.json(), { error: "Route not found." });
+});
 
-test('CORS permits the configured frontend origin and request headers', async () => {
-  const baseUrl = await startApi()
+test("CORS permits the configured frontend origin and request headers", async () => {
+  const baseUrl = await startApi();
   const response = await fetch(`${baseUrl}/api/health`, {
-    method: 'OPTIONS',
+    method: "OPTIONS",
     headers: {
-      Origin: 'http://localhost:5173',
-      'Access-Control-Request-Method': 'GET',
-      'Access-Control-Request-Headers': 'Authorization, Content-Type',
+      Origin: "http://localhost:5173",
+      "Access-Control-Request-Method": "GET",
+      "Access-Control-Request-Headers": "Authorization, Content-Type",
     },
-  })
+  });
 
-  assert.equal(response.status, 204)
+  assert.equal(response.status, 204);
   assert.equal(
-    response.headers.get('access-control-allow-origin'),
-    'http://localhost:5173',
-  )
+    response.headers.get("access-control-allow-origin"),
+    "http://localhost:5173",
+  );
   assert.match(
-    response.headers.get('access-control-allow-headers'),
+    response.headers.get("access-control-allow-headers"),
     /authorization/i,
-  )
-})
+  );
+});
