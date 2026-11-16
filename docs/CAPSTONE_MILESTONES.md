@@ -30,6 +30,8 @@ The checkpoint schedule also appears in Chapter 17 p. 23. A milestone needs a vi
 
 This course-compliance update adds finalized design evidence, security fixes, JavaScript-only carousel source, full recipe proxy use, performance evidence, and deployment configuration. These additions document the current result; they are not proof that the same material existed at an earlier deadline.
 
+The implementation checkpoint is commit `780350a`. Both the [push checks](https://github.com/JovaniBouKhalil/FridgeChef/actions/runs/43909610843) and [pull request checks](https://github.com/JovaniBouKhalil/FridgeChef/actions/runs/43909848184) passed on GitHub's clean Ubuntu environment, including the frontend build and browser suite. [Pull request #1](https://github.com/JovaniBouKhalil/FridgeChef/pull/1) records the complete change.
+
 ## Proposal feature coverage
 
 | Proposal feature | Source evidence |
@@ -74,7 +76,7 @@ The final brief p. 2 assigns 30 functionality, 20 code quality/organization, 15 
 ## Remaining acceptance checklist
 
 - [ ] Connect the hosting accounts and privately configure the team's Atlas URI and production secrets.
-- [ ] Publish the checked source and confirm CI succeeds remotely.
+- [x] Publish the checked source and confirm CI succeeds remotely (`780350a`, both push and PR runs passed).
 - [ ] Deploy the Express API and frontend, then replace the pending README URL entries.
 - [ ] Run `scripts/verify-deployment.mjs` against the two real HTTPS origins.
 - [ ] Complete the phone/two-user/UI refresh check outside demo mode.

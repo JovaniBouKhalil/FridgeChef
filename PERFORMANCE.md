@@ -54,3 +54,5 @@ The reviewed source passed **22 frontend tests**, **42 backend tests**, and **24
 For the chapter's deliberate-failure exercise, an in-memory copy of `normalizeIngredient` had its alias lookup removed. The assertion that `tomatoes` normalizes to `tomato` failed for that copy and passed against the real source. No project file was left broken.
 
 Tests use injected models and mocked HTTP; real Atlas persistence and the live frontend/API flow remain deployment acceptance checks. Reproduce checks using the root README and [deployment guide](docs/DEPLOYMENT.md).
+
+The same source also passed [GitHub Actions on a clean Ubuntu runner](https://github.com/JovaniBouKhalil/FridgeChef/actions/runs/43909610843) at implementation commit `780350a`, including installation, lint, both test suites, the configured build, and all browser checks.
