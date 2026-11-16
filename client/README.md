@@ -1,16 +1,15 @@
-# React + Vite
+# FridgeChef frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + React Router + Vite + plain CSS, following the supplied course slides.
 
-Currently, two official plugins are available:
+The later Dish Orbit carousel adds a typed component, GSAP/Lucide and Tailwind/shadcn-compatible setup. See the [carousel integration guide](../docs/DISH_ORBIT_CAROUSEL.md). Run `npm run typecheck` to check its TSX files.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+See the [project README](../README.md) for setup, features, tests and deployment, [API contract](../docs/API_CONTRACT.md) for backend integration, and [frontend guide](../docs/FRONTEND_GUIDE.md) for course mapping and screen flow.
 
-## React Compiler
+```sh
+npm ci
+# Copy .env.example to .env, then:
+npm run dev
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+To review before the backend exists, use **Sign in → Try demo kitchen**. Normal account actions call the real Express API configured in `VITE_API_URL`.
