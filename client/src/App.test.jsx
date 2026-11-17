@@ -21,7 +21,9 @@ it('protects the pantry and validates signup before calling the API', async () =
   vi.stubGlobal('fetch', fetchMock)
   const user = userEvent.setup()
   renderApp('/pantry')
-  expect(screen.getByRole('heading', { name: 'Sign in' })).toBeInTheDocument()
+  expect(
+    await screen.findByRole('heading', { name: 'Sign in' }),
+  ).toBeInTheDocument()
   await user.click(screen.getByRole('link', { name: 'Create an account' }))
   await user.click(screen.getByRole('button', { name: 'Create account' }))
   expect(screen.getByText('Enter your password.')).toBeInTheDocument()
@@ -53,7 +55,7 @@ it('adds and edits a demo ingredient and keeps it after remounting', async () =>
   sessionStorage.setItem('fridgechef.demo', 'true')
   const user = userEvent.setup()
   const app = renderApp('/pantry')
-  await user.type(screen.getByLabelText('Ingredient'), 'Carrots')
+  await user.type(await screen.findByLabelText('Ingredient'), 'Carrots')
   await user.type(screen.getByLabelText('Quantity'), '3 whole')
   await user.click(screen.getByRole('button', { name: 'Add ingredient' }))
   expect(screen.getByText('Carrots')).toBeInTheDocument()
@@ -65,7 +67,7 @@ it('adds and edits a demo ingredient and keeps it after remounting', async () =>
   expect(screen.getByText('5 whole')).toBeInTheDocument()
   app.unmount()
   renderApp('/pantry')
-  expect(screen.getByText('Carrots')).toBeInTheDocument()
+  expect(await screen.findByText('Carrots')).toBeInTheDocument()
   expect(screen.getByText('5 whole')).toBeInTheDocument()
 })
 
@@ -92,7 +94,9 @@ it('adds only missing ingredients to shopping and does not add duplicates', asyn
     JSON.parse(localStorage.getItem('fridgechef.demoKitchen.v1')).shopping,
   ).toHaveLength(firstCount)
   await user.click(screen.getByRole('link', { name: 'View shopping list' }))
-  const list = screen.getByRole('list', { name: 'Shopping ingredients' })
+  const list = await screen.findByRole('list', {
+    name: 'Shopping ingredients',
+  })
   const checkbox = within(list).getAllByRole('checkbox')[0]
   await user.click(checkbox)
   expect(checkbox).toBeChecked()

@@ -28,10 +28,12 @@ Repeat the second request six times with an unknown test account to observe 401 
 | Ownership / IDOR | Every private list/update/delete query includes verified userId. Bob cannot patch/delete Alice's documents; tests expect 404. |
 | Mass assignment | Routes select allowed fields. Owner IDs and normalized keys come from the server, regardless of fields supplied in JSON. |
 | NoSQL operator input | Query values must be strings/Booleans of the expected shape. Objects such as `{ "$ne": null }` are rejected before reaching a user query. |
+| Central validation | Shared Zod schemas validate, trim, bound, and strip unknown request fields. Mongoose `sanitizeFilter` is also enabled as a defense-in-depth backstop. |
 | XSS | User and recipe text is rendered as React text; no `dangerouslySetInnerHTML`. Recipe links allow HTTP/HTTPS; video links require known HTTPS YouTube hosts. Production frontend CSP is configured in `client/vercel.json`. |
 | Request safety | JSON bodies limited to 16 KB; malformed JSON, oversized bodies, missing records, and upstream failures have controlled JSON errors. |
 | CORS | One configured frontend origin and explicit methods/headers. JWTs are not sent on public recipe requests or to TheMealDB. |
 | Secrets | Actual env files are ignored; only `.env.example` is tracked. Missing/short JWT secrets and missing MongoDB URI fail startup. No tracked `.env` paths were found in repository history during this review. |
+| Production config | Production startup also fails closed when `CLIENT_ORIGIN` is missing, instead of silently allowing a development origin. |
 | Client sessions | Logout and authenticated 401 clear token/profile and discard private React state. Demo storage is separate from authenticated data. |
 
 ## Verification and limits

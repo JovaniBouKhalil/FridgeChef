@@ -178,6 +178,8 @@ export default function DishOrbitCarousel({
                   alt={item.alt || `${item.title} ${item.subtitle}`}
                   width="300"
                   height="300"
+                  loading={position === index ? 'eager' : 'lazy'}
+                  fetchPriority={position === index ? 'high' : 'low'}
                   draggable={false}
                 />
               </div>

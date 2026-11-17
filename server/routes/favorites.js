@@ -2,9 +2,9 @@ import express from "express";
 import Favorite from "../models/Favorite.js";
 import {
   addDocumentIdValidation,
-  isRequestObject,
   sendDuplicateConflict,
 } from "./apiHelpers.js";
+import { favoriteCreateInput, parseInput } from "../validation/schemas.js";
 
 function toFavoriteDto(favorite) {
   const dto = {
@@ -21,37 +21,7 @@ function toFavoriteDto(favorite) {
 }
 
 function readFavoriteFields(body) {
-  if (
-    !isRequestObject(body) ||
-    typeof body.recipeId !== "string" ||
-    !/^\d{1,10}$/.test(body.recipeId.trim()) ||
-    typeof body.recipeName !== "string" ||
-    body.recipeName.trim().length === 0 ||
-    body.recipeName.trim().length > 200 ||
-    (Object.hasOwn(body, "recipeImage") &&
-      (typeof body.recipeImage !== "string" || body.recipeImage.length > 2048))
-  ) {
-    return null;
-  }
-
-  const fields = {
-    recipeId: body.recipeId.trim(),
-    recipeName: body.recipeName.trim(),
-  };
-
-  if (Object.hasOwn(body, "recipeImage")) {
-    if (body.recipeImage) {
-      try {
-        const image = new URL(body.recipeImage);
-        if (!["http:", "https:"].includes(image.protocol)) return null;
-      } catch {
-        return null;
-      }
-    }
-    fields.recipeImage = body.recipeImage;
-  }
-
-  return fields;
+  return parseInput(favoriteCreateInput, body);
 }
 
 export function createFavoritesRouter({ favoriteModel = Favorite } = {}) {

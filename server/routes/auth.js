@@ -3,19 +3,9 @@ import express from "express";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import { getJwtConfig } from "../config/jwt.js";
+import { loginInput, parseInput, signupInput } from "../validation/schemas.js";
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const BCRYPT_ROUNDS = 12;
-const BCRYPT_MAX_BYTES = 72;
-
-function normalizeEmail(value) {
-  if (typeof value !== "string") {
-    return null;
-  }
-
-  const email = value.trim().toLowerCase();
-  return email.length <= 254 && EMAIL_PATTERN.test(email) ? email : null;
-}
 
 function createPublicUser(user) {
   return {
@@ -27,14 +17,6 @@ function createPublicUser(user) {
 
 function createToken(user, secret, expiresIn) {
   return jwt.sign({ userId: user._id.toString() }, secret, { expiresIn });
-}
-
-function isValidPassword(value, { requireMinimumLength = true } = {}) {
-  return (
-    typeof value === "string" &&
-    (!requireMinimumLength || Array.from(value).length >= 8) &&
-    Buffer.byteLength(value, "utf8") <= BCRYPT_MAX_BYTES
-  );
 }
 
 export function createAuthRouter({
@@ -49,14 +31,14 @@ export function createAuthRouter({
   const router = express.Router();
 
   router.post("/signup", async (req, res, next) => {
-    const body = req.body;
-
-    if (!body || typeof body !== "object" || Array.isArray(body)) {
-      return res.status(400).json({ error: "A JSON request body is required." });
+    const body = parseInput(signupInput, req.body);
+    if (!body) {
+      return res
+        .status(400)
+        .json({ error: "Request body contains invalid fields." });
     }
-
-    const name = typeof body.name === "string" ? body.name.trim() : "";
-    const email = normalizeEmail(body.email);
+    const name = body.name;
+    const email = body.email;
     const password = body.password;
 
     if (name.length < 2 || name.length > 100) {
@@ -66,13 +48,9 @@ export function createAuthRouter({
     }
 
     if (!email) {
-      return res.status(400).json({ error: "A valid email address is required." });
-    }
-
-    if (!isValidPassword(password)) {
-      return res.status(400).json({
-        error: "Password must be at least 8 characters and no more than 72 bytes.",
-      });
+      return res
+        .status(400)
+        .json({ error: "A valid email address is required." });
     }
 
     try {
@@ -104,25 +82,17 @@ export function createAuthRouter({
   });
 
   router.post("/login", async (req, res, next) => {
-    const body = req.body;
-
-    if (!body || typeof body !== "object" || Array.isArray(body)) {
-      return res.status(400).json({ error: "A JSON request body is required." });
+    const body = parseInput(loginInput, req.body);
+    if (!body) {
+      return res
+        .status(400)
+        .json({ error: "Request body contains invalid fields." });
     }
-
-    const email = normalizeEmail(body.email);
+    const email = body.email;
     const password = body.password;
 
-    if (!email || !isValidPassword(password, { requireMinimumLength: false })) {
-      return res.status(400).json({
-        error: "A valid email address and password are required.",
-      });
-    }
-
     try {
-      const user = await userModel
-        .findOne({ email })
-        .select("+passwordHash");
+      const user = await userModel.findOne({ email }).select("+passwordHash");
 
       if (
         !user ||

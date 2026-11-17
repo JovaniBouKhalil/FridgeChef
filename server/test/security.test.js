@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
 import { once } from "node:events";
 import test from "node:test";
+import mongoose from "mongoose";
 import { createApp } from "../app.js";
 
 async function withApi(check) {
@@ -89,4 +90,23 @@ test("signup rejects oversized and operator-shaped profile fields before a datab
       assert.equal(typeof (await response.json()).error, "string");
     }
   });
+});
+
+test("security configuration sanitizes Mongo filters and fails closed without a production origin", () => {
+  const previousNodeEnv = process.env.NODE_ENV;
+  const previousOrigin = process.env.CLIENT_ORIGIN;
+  try {
+    process.env.NODE_ENV = "production";
+    delete process.env.CLIENT_ORIGIN;
+    assert.throws(
+      () => createApp({ jwtSecret: randomBytes(32).toString("hex") }),
+      /CLIENT_ORIGIN is required in production/,
+    );
+    assert.equal(mongoose.get("sanitizeFilter"), true);
+  } finally {
+    if (previousNodeEnv === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = previousNodeEnv;
+    if (previousOrigin === undefined) delete process.env.CLIENT_ORIGIN;
+    else process.env.CLIENT_ORIGIN = previousOrigin;
+  }
 });

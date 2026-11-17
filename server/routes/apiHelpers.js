@@ -1,9 +1,5 @@
 import mongoose from "mongoose";
 
-export function isRequestObject(value) {
-  return value !== null && typeof value === "object" && !Array.isArray(value);
-}
-
 export function addDocumentIdValidation(router, resourceName) {
   router.param("id", (req, res, next, id) => {
     if (!mongoose.isValidObjectId(id)) {

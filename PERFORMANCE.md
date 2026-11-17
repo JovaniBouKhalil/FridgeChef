@@ -47,9 +47,16 @@ The after build used the explicitly non-deployable `https://build-only.invalid` 
 - Private MongoDB queries use `lean()` and owner indexes; per-user compound unique indexes support duplicate prevention.
 - AbortController cancels obsolete frontend requests; browser and upstream server requests have timeouts.
 
+## Follow-up improvements after the course audit
+
+- Pantry, favorites, shopping, authentication, recipe detail, and Featured pages are now route-split. The initial JavaScript chunk fell from **333.48 KB / 103.56 KB gzip** to **259.29 KB / 80.91 KB gzip** in the configured production build.
+- Inactive carousel images now use lazy loading and low fetch priority. Active carousel and detail hero images remain eager/high priority so the LCP image is not delayed.
+- The TheMealDB service now keeps a bounded 100-entry, 60-second in-memory cache. Repeated identical reads avoid unnecessary upstream requests, entries expire quickly, and the behavior has an automated test.
+- MongoDB owner and compound uniqueness indexes remain aligned with private query filters. A real Atlas `explain('executionStats')` should still be recorded after deployment because mocked tests cannot truthfully prove an `IXSCAN` on the hosted dataset.
+
 ## Automated test evidence
 
-The reviewed source passed **22 frontend tests**, **42 backend tests**, and **24 desktop/mobile browser tests**, plus frontend lint and a configured production build. Browser checks cover responsive widths of 320, 360, 430, and 768px and the actual controls users operate. Backend tests exercise 401/400/404/409/429 cases, hashing, ownership, and upstream failures.
+The reviewed source passed **22 frontend tests**, **44 backend tests**, and **24 desktop/mobile browser tests**, plus frontend lint and a configured production build. Browser checks cover responsive widths of 320, 360, 430, and 768px and the actual controls users operate. Backend tests exercise 401/400/404/409/429 cases, hashing, ownership, centralized validation, fail-closed configuration, caching, and upstream failures.
 
 For the chapter's deliberate-failure exercise, an in-memory copy of `normalizeIngredient` had its alias lookup removed. The assertion that `tomatoes` normalizes to `tomato` failed for that copy and passed against the real source. No project file was left broken.
 

@@ -2,9 +2,13 @@ import express from "express";
 import PantryItem from "../models/PantryItem.js";
 import {
   addDocumentIdValidation,
-  isRequestObject,
   sendDuplicateConflict,
 } from "./apiHelpers.js";
+import {
+  pantryCreateInput,
+  pantryUpdateInput,
+  parseInput,
+} from "../validation/schemas.js";
 
 function toPantryDto(item) {
   return {
@@ -15,45 +19,7 @@ function toPantryDto(item) {
 }
 
 function readPantryFields(body, { partial = false } = {}) {
-  if (!isRequestObject(body)) {
-    return null;
-  }
-
-  const fields = {};
-
-  if (Object.hasOwn(body, "ingredientName")) {
-    if (
-      typeof body.ingredientName !== "string" ||
-      body.ingredientName.trim().length === 0 ||
-      body.ingredientName.trim().length > 80
-    ) {
-      return null;
-    }
-
-    fields.ingredientName = body.ingredientName.trim();
-  } else if (!partial) {
-    return null;
-  }
-
-  if (Object.hasOwn(body, "quantity")) {
-    if (
-      typeof body.quantity !== "string" ||
-      body.quantity.trim().length === 0 ||
-      body.quantity.trim().length > 50
-    ) {
-      return null;
-    }
-
-    fields.quantity = body.quantity.trim();
-  } else if (!partial) {
-    return null;
-  }
-
-  if (partial && Object.keys(fields).length === 0) {
-    return null;
-  }
-
-  return fields;
+  return parseInput(partial ? pantryUpdateInput : pantryCreateInput, body);
 }
 
 export function createPantryRouter({ pantryModel = PantryItem } = {}) {
@@ -99,7 +65,9 @@ export function createPantryRouter({ pantryModel = PantryItem } = {}) {
     const fields = readPantryFields(req.body, { partial: true });
 
     if (!fields) {
-      return res.status(400).json({ error: "Provide valid pantry fields to update." });
+      return res
+        .status(400)
+        .json({ error: "Provide valid pantry fields to update." });
     }
 
     const update = { ...fields };
@@ -112,7 +80,7 @@ export function createPantryRouter({ pantryModel = PantryItem } = {}) {
         .findOneAndUpdate(
           { _id: req.params.id, userId: req.user.id },
           { $set: update },
-          { new: true, runValidators: true }
+          { new: true, runValidators: true },
         )
         .lean();
 

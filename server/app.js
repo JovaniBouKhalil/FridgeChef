@@ -2,6 +2,7 @@ import cors from "cors";
 import express from "express";
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
+import mongoose from "mongoose";
 
 import { createAuthenticateToken } from "./middleware/authenticateToken.js";
 import { errorHandler } from "./middleware/errorHandler.js";
@@ -14,10 +15,18 @@ import { createShoppingRouter } from "./routes/shopping.js";
 import { createMealDbService } from "./services/mealDbService.js";
 
 export function createApp(options = {}) {
+  mongoose.set("sanitizeFilter", true);
   const clientOrigin =
     options.clientOrigin ??
     process.env.CLIENT_ORIGIN ??
     "http://localhost:5173";
+  if (
+    process.env.NODE_ENV === "production" &&
+    !options.clientOrigin &&
+    !process.env.CLIENT_ORIGIN
+  ) {
+    throw new Error("CLIENT_ORIGIN is required in production.");
+  }
   const mealDbService = options.mealDbService ?? createMealDbService();
   const app = express();
   const proxyHops =

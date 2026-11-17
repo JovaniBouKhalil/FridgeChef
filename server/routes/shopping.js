@@ -2,9 +2,13 @@ import express from "express";
 import ShoppingItem from "../models/ShoppingItem.js";
 import {
   addDocumentIdValidation,
-  isRequestObject,
   sendDuplicateConflict,
 } from "./apiHelpers.js";
+import {
+  parseInput,
+  shoppingCreateInput,
+  shoppingUpdateInput,
+} from "../validation/schemas.js";
 
 function toShoppingDto(item) {
   return {
@@ -15,21 +19,13 @@ function toShoppingDto(item) {
 }
 
 function readShoppingIngredient(body) {
-  if (
-    !isRequestObject(body) ||
-    typeof body.ingredientName !== "string" ||
-    body.ingredientName.trim().length === 0 ||
-    body.ingredientName.trim().length > 80 ||
-    (Object.hasOwn(body, "checked") && typeof body.checked !== "boolean")
-  ) {
-    return null;
-  }
-
-  return {
-    ingredientName: body.ingredientName.trim(),
-    normalizedIngredientName: body.ingredientName.trim().toLowerCase(),
-    checked: body.checked ?? false,
-  };
+  const fields = parseInput(shoppingCreateInput, body);
+  return (
+    fields && {
+      ...fields,
+      normalizedIngredientName: fields.ingredientName.toLowerCase(),
+    }
+  );
 }
 
 export function createShoppingRouter({ shoppingModel = ShoppingItem } = {}) {
@@ -71,16 +67,19 @@ export function createShoppingRouter({ shoppingModel = ShoppingItem } = {}) {
   });
 
   router.patch("/:id", async (req, res, next) => {
-    if (!isRequestObject(req.body) || typeof req.body.checked !== "boolean") {
-      return res.status(400).json({ error: "A boolean checked value is required." });
+    const fields = parseInput(shoppingUpdateInput, req.body);
+    if (!fields) {
+      return res
+        .status(400)
+        .json({ error: "A boolean checked value is required." });
     }
 
     try {
       const item = await shoppingModel
         .findOneAndUpdate(
           { _id: req.params.id, userId: req.user.id },
-          { $set: { checked: req.body.checked } },
-          { new: true, runValidators: true }
+          { $set: fields },
+          { new: true, runValidators: true },
         )
         .lean();
 

@@ -126,6 +126,7 @@ export default function RecipePage() {
             alt={meal.strMeal}
             width="600"
             height="600"
+            fetchPriority="high"
           />
         </div>
         <div className="recipe-detail-heading">

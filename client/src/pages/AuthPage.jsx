@@ -126,6 +126,7 @@ export default function AuthPage({ mode = 'login' }) {
           alt="A warming bowl of lentil soup"
           width="500"
           height="500"
+          fetchPriority="high"
         />
         <span className="auth-story-caption">Corba · Turkish lentil soup</span>
       </Reveal>

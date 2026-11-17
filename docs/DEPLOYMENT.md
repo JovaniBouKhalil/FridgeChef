@@ -50,6 +50,8 @@ The committed rewrite serves `index.html` on application routes, following the [
 
 Set `CLIENT_ORIGIN` on Render to the final stable Vercel origin and redeploy the API. Preview domains are different origins; keep the graded production URL stable. Public recipe calls go to the Express proxy; the frontend only needs `VITE_API_URL`. No database URI or JWT signing secret is a frontend variable.
 
+Production startup intentionally fails when `CLIENT_ORIGIN` is missing. This follows the course fail-fast guidance and prevents a forgotten production setting from silently falling back to localhost.
+
 ## 4. Live acceptance check
 
 Run the deployment verifier from the repository root using the two real URLs:
