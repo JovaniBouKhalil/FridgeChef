@@ -9,6 +9,7 @@ import { getRecipe, recipeImage } from '../api/recipes'
 import { useAuth } from '../auth/AuthContext'
 import { useKitchen } from '../context/KitchenContext'
 import { matchIngredients } from '../utils/ingredients'
+import { parseInstructions } from '../utils/instructions'
 import { ErrorMessage, Spinner } from '../components/Feedback'
 import Reveal from '../components/Reveal'
 import Icon from '../components/Icon'
@@ -106,10 +107,7 @@ export default function RecipePage() {
   const { meal } = state
   const match = matchIngredients(meal, pantry)
   const saved = favorites.some((item) => item.recipeId === id)
-  const instructions = (meal.strInstructions || '')
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean)
+  const instructions = parseInstructions(meal.strInstructions)
   const source = safeExternalLink(meal.strSource)
   const video = safeExternalLink(meal.strYoutube)
 

@@ -6,6 +6,38 @@ test.beforeEach(async ({ page }) => {
   )
 })
 
+test('recipe instructions do not render standalone number markers as steps', async ({
+  page,
+}) => {
+  await page.route('http://localhost:3000/api/recipes/53322', (route) =>
+    route.fulfill({
+      json: {
+        meals: [
+          {
+            idMeal: '53322',
+            strMeal: 'Flan',
+            strCategory: 'Dessert',
+            strArea: 'Spanish',
+            strMealThumb: '/images/52771.jpg',
+            strInstructions:
+              'Prepare the caramel.\n\n2\nPreheat the oven.\n\n3\nHeat the milk.\n\n4\nChill overnight.',
+          },
+        ],
+      },
+    }),
+  )
+
+  await page.goto('/recipes/53322')
+  const steps = page.locator('.method-steps li')
+  await expect(steps).toHaveCount(4)
+  await expect(steps.locator('p')).toHaveText([
+    'Prepare the caramel.',
+    'Preheat the oven.',
+    'Heat the milk.',
+    'Chill overnight.',
+  ])
+})
+
 test('suggestions support keyboard choice, clearing, history removal, and Escape', async ({
   page,
 }) => {
