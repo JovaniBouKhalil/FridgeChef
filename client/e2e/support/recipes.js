@@ -10,6 +10,8 @@ const meals = JSON.parse(
 
 // Only browser tests use this fixture; normal mode calls the real Express API.
 export async function mockRecipes(page) {
+  // Browser tests intercept their local API fixture here. Production requests
+  // use the public API origin supplied at build time.
   await page.route('http://localhost:3000/api/recipes**', (route) => {
     expect(route.request().headers().authorization).toBeUndefined()
     const url = new URL(route.request().url())

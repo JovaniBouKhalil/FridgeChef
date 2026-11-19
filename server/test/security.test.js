@@ -21,8 +21,11 @@ async function withApi(check) {
     jwtSecret: randomBytes(32).toString("hex"),
     userModel,
   });
+  // Run security checks against an isolated loopback server only; the deployed
+  // API is started separately by the hosting platform.
   const server = app.listen(0, "127.0.0.1");
   await once(server, "listening");
+  // This URL points only to the ephemeral server created by this test.
   const url = `http://127.0.0.1:${server.address().port}`;
   const post = (path, body) =>
     fetch(url + path, {

@@ -9,6 +9,8 @@ test.beforeEach(async ({ page }) => {
 test('recipe instructions do not render standalone number markers as steps', async ({
   page,
 }) => {
+  // Playwright intercepts this local test URL; deployed recipe requests use the
+  // public VITE_API_URL compiled into the production bundle.
   await page.route('http://localhost:3000/api/recipes/53322', (route) =>
     route.fulfill({
       json: {
@@ -98,6 +100,7 @@ test('signup validates touched fields, focuses errors, and shows genuine pending
   const responseReady = new Promise((resolve) => {
     release = resolve
   })
+  // This local signup endpoint is mocked only for the browser test below.
   await page.route('http://localhost:3000/api/auth/signup', async (route) => {
     const headers = {
       'Access-Control-Allow-Origin': '*',

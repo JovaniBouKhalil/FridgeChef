@@ -14,6 +14,8 @@ export default defineConfig(({ command, mode }) => {
     if (
       !api ||
       api.protocol !== 'https:' ||
+      // These local-only hosts are explicitly rejected during production builds;
+      // listing them here prevents the deployed client from connecting to them.
       ['localhost', '127.0.0.1', '[::1]'].includes(api.hostname)
     ) {
       throw new Error(

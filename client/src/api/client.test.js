@@ -9,6 +9,8 @@ describe('shared API client', () => {
     fetch.mockResolvedValue(new Response(JSON.stringify([]), { status: 200 }))
     await apiFetch('/api/pantry')
     expect(fetch).toHaveBeenCalledWith(
+      // Unit-test expectation for the local-development fallback; production
+      // builds must provide a public VITE_API_URL.
       'http://localhost:3000/api/pantry',
       expect.objectContaining({
         headers: expect.objectContaining({
@@ -24,6 +26,7 @@ describe('shared API client', () => {
     )
     await publicApiFetch('/api/recipes/search?name=pasta')
     expect(fetch.mock.calls[0][0]).toBe(
+      // This verifies local test behavior and is never used by deployed code.
       'http://localhost:3000/api/recipes/search?name=pasta',
     )
     expect(fetch.mock.calls[0][1].headers.Authorization).toBeUndefined()

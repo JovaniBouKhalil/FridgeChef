@@ -53,6 +53,8 @@ test('shopping mutations keep the loaded list visible and update it from API res
       JSON.stringify({ name: 'Cook', email: 'cook@example.com' }),
     )
   })
+  // Intercept the local API address used by this browser-test environment only;
+  // the production bundle receives its public API origin from VITE_API_URL.
   await page.route('http://localhost:3000/api/**', async (route) => {
     const request = route.request()
     if (request.method() === 'OPTIONS')
@@ -205,6 +207,8 @@ test('real API mode signs in, writes with a bearer token, and handles session ex
 }) => {
   let expired = false
   const pantry = []
+  // This local route is a Playwright mock for the test below, not a production
+  // API destination.
   await page.route('http://localhost:3000/api/**', async (route) => {
     const request = route.request()
     if (request.method() === 'OPTIONS')

@@ -84,6 +84,8 @@ test('featured carousel navigates by arrows, thumbnails and keyboard, and cleans
   await page
     .getByRole('link', { name: 'Browse all recipes', exact: true })
     .click()
+  // The E2E site itself runs locally under Playwright; this assertion is not a
+  // URL used by the deployed application.
   await expect(page).toHaveURL('http://localhost:5173/')
   await expect(
     page.getByRole('heading', { name: 'Recipes', exact: true }),

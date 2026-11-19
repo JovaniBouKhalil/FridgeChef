@@ -15,6 +15,8 @@ try {
   console.info("Connected to MongoDB.");
 
   app.listen(port, () => {
+    // This is only a developer-friendly log label. The deployed server still
+    // listens on the host-provided PORT; it does not connect to localhost.
     console.info(`FridgeChef API listening on http://localhost:${port}`);
   });
 } catch (error) {

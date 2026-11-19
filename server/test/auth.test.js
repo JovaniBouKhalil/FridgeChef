@@ -59,11 +59,14 @@ function createTestApp(userModel) {
 }
 
 async function withServer(app, callback) {
+  // Bind an ephemeral loopback server only for this test process; production
+  // starts through server.js on the host-provided port.
   const server = app.listen(0, "127.0.0.1");
   await once(server, "listening");
   const address = server.address();
 
   try {
+    // This URL addresses the temporary test server and is never deployed.
     return await callback(`http://127.0.0.1:${address.port}`);
   } finally {
     await new Promise((resolve, reject) => {
@@ -249,6 +252,8 @@ test("CORS allows the frontend origin, auth headers, and contract methods", asyn
     userModel: createFakeUserModel(),
     jwtSecret,
     jwtExpiresIn: "1h",
+    // Local test origin used to verify CORS behavior; production supplies
+    // CLIENT_ORIGIN through the deployment environment.
     clientOrigin: "http://localhost:5173",
   });
 
@@ -256,6 +261,7 @@ test("CORS allows the frontend origin, auth headers, and contract methods", asyn
     const response = await fetch(`${baseUrl}/api/auth/login`, {
       method: "OPTIONS",
       headers: {
+        // Simulate the local test client as the request origin.
         origin: "http://localhost:5173",
         "access-control-request-method": "POST",
         "access-control-request-headers": "authorization,content-type",
@@ -265,6 +271,7 @@ test("CORS allows the frontend origin, auth headers, and contract methods", asyn
     assert.equal(response.status, 204);
     assert.equal(
       response.headers.get("access-control-allow-origin"),
+      // Confirm the temporary test origin is returned, not a production setting.
       "http://localhost:5173"
     );
     assert.match(

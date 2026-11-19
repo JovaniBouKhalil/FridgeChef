@@ -19,6 +19,8 @@ export function createApp(options = {}) {
   const clientOrigin =
     options.clientOrigin ??
     process.env.CLIENT_ORIGIN ??
+    // Local-development fallback only. Production startup rejects a missing
+    // CLIENT_ORIGIN below, so the deployed API never falls back to localhost.
     "http://localhost:5173";
   if (
     process.env.NODE_ENV === "production" &&

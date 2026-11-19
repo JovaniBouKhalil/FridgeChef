@@ -126,11 +126,13 @@ function tokenFor(userId) {
 }
 
 async function withServer(app, callback) {
+  // This loopback listener exists only for the test and uses an ephemeral port.
   const server = app.listen(0, "127.0.0.1");
   await once(server, "listening");
   const address = server.address();
 
   try {
+    // The callback receives only the temporary in-process test server URL.
     return await callback(`http://127.0.0.1:${address.port}`);
   } finally {
     await new Promise((resolve, reject) => {

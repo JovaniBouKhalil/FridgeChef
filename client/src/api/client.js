@@ -2,6 +2,8 @@ export const TOKEN_KEY = 'fridgechef.token'
 export const USER_KEY = 'fridgechef.user'
 
 const API_URL = (
+  // Local-development fallback only. vite.config.js rejects production builds
+  // whose VITE_API_URL is missing or points to localhost.
   import.meta.env.VITE_API_URL || 'http://localhost:3000'
 ).replace(/\/$/, '')
 

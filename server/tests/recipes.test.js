@@ -25,6 +25,8 @@ async function startApi(service = {}) {
       filterMealsByIngredient: async () => [],
       ...service,
     },
+    // Local test origin for CORS assertions; production reads CLIENT_ORIGIN
+    // from the deployment environment.
     clientOrigin: "http://localhost:5173",
     jwtSecret: "recipe-api-test-secret-that-is-at-least-32-bytes",
   });
@@ -32,6 +34,7 @@ async function startApi(service = {}) {
   openServers.add(server);
   await new Promise((resolve) => server.once("listening", resolve));
   const { port } = server.address();
+  // Address only the temporary server created for this test run.
   return `http://127.0.0.1:${port}`;
 }
 
@@ -179,6 +182,7 @@ test("CORS permits the configured frontend origin and request headers", async ()
   const response = await fetch(`${baseUrl}/api/health`, {
     method: "OPTIONS",
     headers: {
+      // Simulate a request from the local test client, not the deployed client.
       Origin: "http://localhost:5173",
       "Access-Control-Request-Method": "GET",
       "Access-Control-Request-Headers": "Authorization, Content-Type",
@@ -188,6 +192,7 @@ test("CORS permits the configured frontend origin and request headers", async ()
   assert.equal(response.status, 204);
   assert.equal(
     response.headers.get("access-control-allow-origin"),
+    // Verify the configured test origin is echoed by CORS.
     "http://localhost:5173",
   );
   assert.match(
