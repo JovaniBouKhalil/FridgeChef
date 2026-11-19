@@ -55,14 +55,21 @@ export default function KitchenProvider({ children }) {
     }
     if (!token)
       throw new Error('Please sign in to save changes to your kitchen.')
-    await apiFetch(
+    const result = await apiFetch(
       `/api/${collection}${id ? `/${encodeURIComponent(id)}` : ''}`,
       {
         method,
         ...(values && { body: JSON.stringify(values) }),
       },
     )
-    await requests[collection].reload()
+    requests[collection].updateData((current) => {
+      const items = Array.isArray(current) ? current : []
+      if (method === 'POST') return [...items, result]
+      if (method === 'DELETE')
+        return items.filter((item) => item._id !== id)
+      return items.map((item) => (item._id === id ? result : item))
+    })
+    return result
   }
 
   async function toggleFavorite(meal) {

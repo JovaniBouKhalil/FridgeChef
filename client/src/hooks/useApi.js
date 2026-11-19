@@ -31,5 +31,12 @@ export default function useApi(path, { enabled = true } = {}) {
     return () => activeRequest.current?.abort()
   }, [reload])
 
-  return { ...state, loading: enabled && state.loading, reload }
+  const updateData = useCallback((update) => {
+    setState((previous) => ({
+      ...previous,
+      data: update(previous.data),
+    }))
+  }, [])
+
+  return { ...state, loading: enabled && state.loading, reload, updateData }
 }

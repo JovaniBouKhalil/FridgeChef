@@ -33,6 +33,89 @@ test('guest discovery searches and filters and keeps private routes protected', 
   await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible()
 })
 
+test('shopping mutations keep the loaded list visible and update it from API responses', async ({
+  page,
+}) => {
+  let mutationsStarted = false
+  let shoppingReadsDuringMutations = 0
+  let releasePatch
+  const patchAllowed = new Promise((resolve) => {
+    releasePatch = resolve
+  })
+  const shopping = [
+    { _id: 'shopping-1', ingredientName: 'Milk', checked: false },
+  ]
+
+  await page.addInitScript(() => {
+    localStorage.setItem('fridgechef.token', 'shopping-test-token')
+    localStorage.setItem(
+      'fridgechef.user',
+      JSON.stringify({ name: 'Cook', email: 'cook@example.com' }),
+    )
+  })
+  await page.route('http://localhost:3000/api/**', async (route) => {
+    const request = route.request()
+    if (request.method() === 'OPTIONS')
+      return route.fulfill({
+        status: 204,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': '*',
+          'Access-Control-Allow-Methods': '*',
+        },
+      })
+
+    expect(request.headers().authorization).toBe('Bearer shopping-test-token')
+    const path = new URL(request.url()).pathname
+    const headers = { 'Access-Control-Allow-Origin': '*' }
+    if (path === '/api/shopping' && request.method() === 'GET') {
+      if (mutationsStarted) shoppingReadsDuringMutations += 1
+      return route.fulfill({ json: shopping, headers })
+    }
+    if (path === '/api/shopping' && request.method() === 'POST') {
+      const item = {
+        ...request.postDataJSON(),
+        _id: `shopping-${shopping.length + 1}`,
+      }
+      shopping.push(item)
+      return route.fulfill({ status: 201, json: item, headers })
+    }
+    if (path === '/api/shopping/shopping-1' && request.method() === 'PATCH') {
+      await patchAllowed
+      shopping[0] = { ...shopping[0], ...request.postDataJSON() }
+      return route.fulfill({ json: shopping[0], headers })
+    }
+    if (path.startsWith('/api/shopping/') && request.method() === 'DELETE') {
+      const id = path.split('/').at(-1)
+      shopping.splice(
+        shopping.findIndex((item) => item._id === id),
+        1,
+      )
+      return route.fulfill({ status: 204, headers })
+    }
+    return route.fulfill({ json: [], headers })
+  })
+
+  await page.goto('/shopping')
+  const milk = page.getByText('Milk', { exact: true })
+  await expect(milk).toBeVisible()
+  mutationsStarted = true
+  const checkbox = page.getByRole('checkbox', { name: 'Milk' })
+  await checkbox.click()
+  await expect(checkbox).toBeDisabled()
+  await expect(milk).toBeVisible()
+  await expect(page.getByText('Getting your list ready…')).toHaveCount(0)
+  releasePatch()
+  await expect(checkbox).toBeChecked()
+
+  await page.getByLabel('Add to shopping list').fill('Bread')
+  await page.getByRole('button', { name: 'Add', exact: true }).click()
+  await expect(page.getByText('Bread', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Remove Bread' }).click()
+  await expect(page.getByText('Bread', { exact: true })).toHaveCount(0)
+  expect(shoppingReadsDuringMutations).toBe(0)
+})
+
 test('demo kitchen supports pantry CRUD, saving, and a deduplicated shopping checklist', async ({
   page,
 }, testInfo) => {
