@@ -68,7 +68,7 @@ export async function verifyLiveBrowser(frontend, account, password, passed) {
         await page.getByRole("button", { name: "Add", exact: true }).click();
         await page
           .getByRole("checkbox", { name: "Carrots", exact: true })
-          .check();
+          .click();
         await expect(
           page.getByRole("checkbox", { name: "Carrots", exact: true }),
         ).toBeChecked();
@@ -98,15 +98,14 @@ export async function verifyLiveBrowser(frontend, account, password, passed) {
           "Live page must fit its viewport",
         );
         for (const name of ["Salt", "Carrots"]) {
-          await page
+          const item = name === "Salt" ? salt : carrots;
+          await item
             .getByRole("button", { name: `Remove ${name}`, exact: true })
             .click();
-          await page
+          await item
             .getByRole("button", { name: "Yes, remove", exact: true })
             .click();
-          await expect(
-            page.getByRole("button", { name: `Edit ${name}`, exact: true }),
-          ).toHaveCount(0);
+          await expect(item).toHaveCount(0);
         }
         // A cleared checklist allows the same ingredient to be bought again.
         await page.goto(`${frontend}/shopping`);

@@ -2,7 +2,7 @@
 
 The course setup is a Vite/React frontend on Vercel, an Express/Node API on Render, and MongoDB in Atlas. The application remains JavaScript, JSX, HTML, and CSS. Hosting settings do not require another application framework.
 
-**Current state: deployed.** The frontend is [FridgeChef on Vercel](https://fridge-chef-ecru.vercel.app), the API is [FridgeChef on Render](https://fridgechef-api-xvri.onrender.com/api/health), and persistence uses MongoDB Atlas. Both public endpoints responded successfully on **21 November 2026**. The settings below explain how the deployment is configured and how to reproduce it. The latest feedback changes must pass the live acceptance check after deployment.
+**Current state: deployed and live-verified.** The frontend is [FridgeChef on Vercel](https://fridge-chef-ecru.vercel.app), the API is [FridgeChef on Render](https://fridgechef-api-xvri.onrender.com/api/health), and persistence uses MongoDB Atlas. The updated API and real desktop/mobile browser flows passed acceptance checks on **21 November 2026**; see [ACCEPTANCE.md](ACCEPTANCE.md). The settings below explain how the deployment is configured and how to reproduce it.
 
 ## 1. Database
 

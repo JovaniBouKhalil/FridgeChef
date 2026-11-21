@@ -40,15 +40,26 @@ Historical Lighthouse measurements in PERFORMANCE.md retain their original dates
 - Vercel reported a successful deployment of `f9d6184`.
 - The deployed frontend passed isolated demo checks at 1440px and 390px: unit editing, refresh persistence, and shopping-to-pantry additions, with zero uncaught browser errors. These checks verify the production frontend bundle; demo storage does not establish MongoDB persistence.
 
-**API rollout still needs confirmation.** After the successful source push and CI run, the public API still returned the previous behavior: zero recipes for normalized mushroom and chilli flake, while the updated service returned 20 and 8 respectively against the real provider. Render account access is not connected in this workspace, so its deployment event/log state could not be inspected. Confirm the API service deploys the updated `main` commit before considering this release live-verified.
+**Live release verified on 21 November 2026.** The team's Render dashboard showed commit `bba8042` as successfully deployed. Public API checks then returned 20 recipes for normalized mushroom and 8 for chilli flake. The complete real-service API and browser acceptance run passed with exit code 0.
 
-Once that API rollout completes, run:
+The successful run used this command (with `PLAYWRIGHT_CHANNEL=chrome` to select installed Chrome):
 
 ```sh
 node scripts/verify-deployment.mjs https://fridge-chef-ecru.vercel.app https://fridgechef-api-xvri.onrender.com --browser
 ```
 
-This expanded live check covers real accounts, persistence, owner isolation, ingredient duplicates, shopping-to-pantry updates, recipe searches, CORS, and desktop/mobile UI flows. It has not been recorded as passed against the old API. Generated resource records are cleaned up; labeled test accounts remain because account deletion is outside the application scope. Credentials remain in memory.
+| Live check | Result |
+| --- | --- |
+| Public frontend, direct route loads, API health, and rejected unauthenticated requests | Passed |
+| Two real signups, correct login, and wrong-password rejection | Passed |
+| Pantry CRUD, fresh database re-reads, validation, and cross-user isolation | Passed |
+| Singular/plural and spelling-variant duplicate prevention | Passed |
+| Favorites, shopping persistence, automatic pantry additions, repeated checks, and preservation of existing quantities | Passed |
+| Live recipe search/details, normalized ingredient filters, and production CORS | Passed |
+| Real 1440px and 390px browser flows: login, units, duplicate feedback, persisted edits, shopping transfer, deletion, logout, and layout | Passed with zero uncaught browser errors |
+| Cleanup of all generated pantry, favorites, and shopping records | Passed |
+
+These live checks used real services without mocked API responses. The verifier waits for asynchronous saves and deletions before asserting their results. Two labeled account records remain per verifier run because account deletion is outside the application scope; generated private resource records were cleaned up. Credentials remained in memory and were not printed.
 
 ## Remaining manual evidence
 

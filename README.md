@@ -165,9 +165,9 @@ Coverage includes ingredient matching, authentication headers and expiry, valida
 
 ### Live deployment checks
 
-Live checks on **18 November 2026** verified signup/login, owner isolation, pantry CRUD and persisted re-reads, recipe search, favorites, shopping generation/deduplication, checkbox persistence, and deep-link refreshes. Browser checks used the real deployed API on desktop and an emulated mobile viewport. A physical phone on mobile data and the final live presentation remain manual checks.
+Live checks on **21 November 2026** passed against the updated deployed app: signup/login, owner isolation, pantry CRUD and fresh database re-reads, general ingredient normalization, measured quantities, shopping-to-pantry additions, repeat-check safety, recipe searches, favorites, CORS, and deep-link refreshes. Real desktop (1440px) and mobile (390px) browser flows passed without mocked APIs or uncaught browser errors. Generated private records were cleaned up. The team confirms **9/10 for the completed presentation**; a physical-phone/mobile-data check remains manual. See [the acceptance report](docs/ACCEPTANCE.md).
 
-To reproduce the API acceptance check, use Node.js 24 and a checkout of this repository. Run this command from the repository root; it targets the public frontend and API:
+To reproduce the API acceptance check, use Node.js 24 and a checkout of this repository. Run this command from the repository root; it targets the public frontend and API. Append `--browser` after installing the frontend's development dependencies and Playwright Chromium to include the real desktop/mobile walkthrough:
 
 ```sh
 node scripts/verify-deployment.mjs https://fridge-chef-ecru.vercel.app https://fridgechef-api-xvri.onrender.com

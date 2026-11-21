@@ -78,7 +78,7 @@ The final brief p. 2 assigns 30 functionality, 20 code quality/organization, 15 
 - [x] Configure hosting and the team's Atlas connection; private values remain outside the repository.
 - [x] Publish the checked source and confirm CI succeeds remotely (`780350a`, both push and PR runs passed).
 - [x] Deploy the Express API and frontend and record both public URLs in README.
-- [ ] Complete the updated release acceptance check; results belong in [ACCEPTANCE.md](ACCEPTANCE.md).
+- [x] Complete the updated release acceptance check against the real API and desktop/mobile browsers on 21 November 2026; results are in [ACCEPTANCE.md](ACCEPTANCE.md).
 - [ ] Complete the physical-phone/mobile-data check outside demo mode; browser emulation is separate evidence.
 - [ ] Confirm original milestone submission dates against the course submission system; Git history alone does not establish session deadlines.
 - [x] Deliver the presentation/Q&A; the team confirms **9/10**.
