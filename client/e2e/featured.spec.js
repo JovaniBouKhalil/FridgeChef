@@ -96,6 +96,9 @@ test('featured carousel navigates by arrows, thumbnails and keyboard, and cleans
 test('featured recipe actions save real recipes and open their full details', async ({
   page,
 }) => {
+  // Animation is exercised by the navigation test. Keep action clicks clear
+  // of the moving entrance image on slower CI runners.
+  await page.emulateMedia({ reducedMotion: 'reduce' })
   await demo(page)
   await page.goto('/featured')
   await page.getByRole('button', { name: 'Save recipe', exact: true }).click()
@@ -116,6 +119,7 @@ test('featured recipe actions save real recipes and open their full details', as
 test('guest saving keeps the existing login and return-to-featured flow', async ({
   page,
 }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/featured')
   await page.getByRole('button', { name: 'Save recipe', exact: true }).click()
   await expect(page).toHaveURL(/\/login$/)
