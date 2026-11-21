@@ -30,17 +30,62 @@ it('shows pending state for the real save promise and blocks duplicate submissio
   const user = userEvent.setup()
   render(<IngredientForm onSave={save} />)
   await user.type(screen.getByLabelText('Ingredient'), 'Carrots')
-  await user.type(screen.getByLabelText('Quantity'), '3 whole')
+  await user.type(screen.getByLabelText('Quantity'), '3')
+  await user.selectOptions(screen.getByLabelText('Unit'), 'whole')
   await user.click(screen.getByRole('button', { name: 'Add ingredient' }))
   const pending = screen.getByRole('button', { name: 'Saving…' })
   expect(pending).toBeDisabled()
   expect(pending.closest('form')).toHaveAttribute('aria-busy', 'true')
   await user.click(pending)
   expect(save).toHaveBeenCalledOnce()
+  expect(save).toHaveBeenCalledWith({
+    ingredientName: 'Carrots',
+    quantity: '3 whole',
+  })
+  expect(screen.getByLabelText('Unit')).toBeDisabled()
   await act(async () => finish())
   expect(screen.getByRole('button', { name: 'Add ingredient' })).toBeEnabled()
   expect(screen.getByLabelText('Ingredient')).toHaveValue('')
+  expect(screen.getByLabelText('Unit')).toHaveValue('')
   expect(
     screen.queryByText('Enter an ingredient name.'),
   ).not.toBeInTheDocument()
+})
+
+it.each([
+  ['Salt', '0.5', 'tsp', '0.5 tsp'],
+  ['Tomatoes', '2', '', '2'],
+])(
+  'saves %s with its selected measurement or no unit',
+  async (ingredientName, quantity, unit, expected) => {
+    const save = vi.fn().mockResolvedValue(undefined)
+    const user = userEvent.setup()
+    render(<IngredientForm onSave={save} />)
+    await user.type(screen.getByLabelText('Ingredient'), ingredientName)
+    await user.type(screen.getByLabelText('Quantity'), quantity)
+    await user.selectOptions(screen.getByLabelText('Unit'), unit)
+    await user.click(screen.getByRole('button', { name: 'Add ingredient' }))
+    expect(save).toHaveBeenCalledWith({ ingredientName, quantity: expected })
+  },
+)
+
+it.each([
+  '500 g',
+  '2 bulbs',
+  '2 boxes',
+  '1 litre',
+  '1/2 cup',
+  'to taste',
+  'Not specified',
+])('preserves the saved quantity %s when editing', async (quantity) => {
+  const save = vi.fn().mockResolvedValue(undefined)
+  const user = userEvent.setup()
+  render(
+    <IngredientForm
+      initial={{ _id: 'saved', ingredientName: 'Salt', quantity }}
+      onSave={save}
+    />,
+  )
+  await user.click(screen.getByRole('button', { name: 'Save changes' }))
+  expect(save).toHaveBeenCalledWith({ ingredientName: 'Salt', quantity })
 })

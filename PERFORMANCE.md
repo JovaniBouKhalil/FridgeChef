@@ -37,7 +37,7 @@ The score was already at its maximum; it did not improve. Small timing changes a
 - [After report](docs/evidence/lighthouse-after.html)
 - [Machine-readable metric summary](docs/evidence/performance-metrics.json)
 
-The after build used the explicitly non-deployable `https://build-only.invalid` compile-check origin because a production API URL has not been provisioned. The audited sign-in page performs no API calls. The hosting build must use the actual HTTPS API origin, and the final production site should be audited again after publication.
+The historical after build used the explicitly non-deployable `https://build-only.invalid` compile-check origin before the production API was provisioned. The audited sign-in page performs no API calls. The deployed frontend now uses the public API origin documented in the root README. The measurements above describe the 16 November local audit; they do not claim a current live Lighthouse score.
 
 ## Existing performance controls
 
@@ -56,7 +56,7 @@ The after build used the explicitly non-deployable `https://build-only.invalid` 
 
 ## Automated test evidence
 
-The reviewed source passed **22 frontend tests**, **44 backend tests**, and **24 desktop/mobile browser tests**, plus frontend lint and a configured production build. Browser checks cover responsive widths of 320, 360, 430, and 768px and the actual controls users operate. Backend tests exercise 401/400/404/409/429 cases, hashing, ownership, centralized validation, fail-closed configuration, caching, and upstream failures.
+The 16 November source passed **22 frontend tests**, **44 backend tests**, and **24 desktop/mobile browser tests**, plus frontend lint and a configured production build. Current counts and release checks are recorded in [the acceptance report](docs/ACCEPTANCE.md). Browser checks cover responsive widths of 320, 360, 430, and 768px and the actual controls users operate. Backend tests exercise 401/400/404/409/429 cases, hashing, ownership, centralized validation, fail-closed configuration, caching, and upstream failures.
 
 For the chapter's deliberate-failure exercise, an in-memory copy of `normalizeIngredient` had its alias lookup removed. The assertion that `tomatoes` normalizes to `tomato` failed for that copy and passed against the real source. No project file was left broken.
 

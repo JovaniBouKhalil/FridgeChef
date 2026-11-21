@@ -56,13 +56,14 @@ it('adds and edits a demo ingredient and keeps it after remounting', async () =>
   const user = userEvent.setup()
   const app = renderApp('/pantry')
   await user.type(await screen.findByLabelText('Ingredient'), 'Carrots')
-  await user.type(screen.getByLabelText('Quantity'), '3 whole')
+  await user.type(screen.getByLabelText('Quantity'), '3')
+  await user.selectOptions(screen.getByLabelText('Unit'), 'whole')
   await user.click(screen.getByRole('button', { name: 'Add ingredient' }))
   expect(screen.getByText('Carrots')).toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: 'Edit Carrots' }))
-  const edit = screen.getByDisplayValue('3 whole')
+  const edit = screen.getByDisplayValue('3')
   await user.clear(edit)
-  await user.type(edit, '5 whole')
+  await user.type(edit, '5')
   await user.click(screen.getByRole('button', { name: 'Save changes' }))
   expect(screen.getByText('5 whole')).toBeInTheDocument()
   app.unmount()
@@ -150,4 +151,79 @@ it('sends login and pantry requests to Express and clears private state on expir
   await waitFor(() =>
     expect(screen.getByText(/Your session has expired/)).toBeInTheDocument(),
   )
+})
+
+it('demo checks add ingredients once, keep pantry amounts, and persist after clearing shopping', async () => {
+  sessionStorage.setItem('fridgechef.demo', 'true')
+  localStorage.setItem(
+    'fridgechef.demoKitchen.v1',
+    JSON.stringify({
+      pantry: [
+        { _id: 'tomato', ingredientName: 'Tomatoes', quantity: '500 g' },
+      ],
+      favorites: [],
+      shopping: [
+        { _id: 'tomatos', ingredientName: 'TOmatos', checked: false },
+        { _id: 'salt', ingredientName: 'Salt', checked: false },
+      ],
+    }),
+  )
+  const user = userEvent.setup()
+  const app = renderApp('/shopping')
+  const readKitchen = () =>
+    JSON.parse(localStorage.getItem('fridgechef.demoKitchen.v1'))
+  await user.click(await screen.findByRole('checkbox', { name: 'TOmatos' }))
+  expect(readKitchen().pantry).toHaveLength(1)
+  expect(readKitchen().pantry[0].quantity).toBe('500 g')
+  const salt = screen.getByRole('checkbox', { name: 'Salt' })
+  await user.click(salt)
+  await user.click(salt)
+  await user.click(salt)
+  expect(readKitchen().pantry).toHaveLength(2)
+  expect(readKitchen().pantry[1]).toMatchObject({
+    ingredientName: 'Salt',
+    quantity: 'Not specified',
+  })
+  await user.click(screen.getByRole('button', { name: 'Clear picked up' }))
+  expect(readKitchen().shopping).toHaveLength(0)
+  app.unmount()
+  renderApp('/pantry')
+  expect(await screen.findByText('Salt')).toBeInTheDocument()
+  expect(screen.getByText('500 g')).toBeInTheDocument()
+})
+
+it('refreshes the signed-in pantry after checking a shopping item', async () => {
+  localStorage.setItem(TOKEN_KEY, 'test-token')
+  localStorage.setItem(USER_KEY, JSON.stringify({ name: 'Cook' }))
+  let purchased = false
+  const fetchMock = vi.fn(async (url, options = {}) => {
+    if (url.includes('/api/shopping') && options.method === 'PATCH')
+      purchased = true
+    const item = { _id: 'salt', ingredientName: 'Salt', checked: purchased }
+    return new Response(
+      JSON.stringify(
+        url.endsWith('/api/pantry')
+          ? purchased
+            ? [{ ...item, quantity: 'Not specified' }]
+            : []
+          : url.endsWith('/api/favorites')
+            ? []
+            : options.method === 'PATCH'
+              ? item
+              : [item],
+      ),
+    )
+  })
+  vi.stubGlobal('fetch', fetchMock)
+  const user = userEvent.setup()
+  renderApp('/shopping')
+  await user.click(await screen.findByRole('checkbox', { name: 'Salt' }))
+  await waitFor(() =>
+    expect(
+      fetchMock.mock.calls.filter(([url]) => url.endsWith('/api/pantry')),
+    ).toHaveLength(2),
+  )
+  await user.click(screen.getByRole('link', { name: /My pantry/ }))
+  expect(await screen.findByText('Salt')).toBeInTheDocument()
+  expect(screen.getByText('Not specified')).toBeInTheDocument()
 })

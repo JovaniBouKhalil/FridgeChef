@@ -43,6 +43,6 @@ npm --prefix server test
 npm --prefix client test
 ```
 
-Automated tests use injected models, so they prove request handling and ownership filters without proving a live Atlas connection or index creation. The deployed two-user check in [DEPLOYMENT.md](docs/DEPLOYMENT.md) remains required.
+Automated tests use injected models, so they prove request handling and ownership filters without proving a live Atlas connection or index creation. The deployed two-user check is documented in [DEPLOYMENT.md](docs/DEPLOYMENT.md); current results and verification limits are recorded in [the acceptance report](docs/ACCEPTANCE.md).
 
 The class token-storage approach is retained: localStorage plus Bearer headers, as taught in Chapter 19 page 18. HTTPS must be supplied by the production hosts. Rate limits use an in-memory store suitable for one capstone API instance; counters reset on restart and are not shared across multiple instances. `TRUST_PROXY_HOPS=1` is set for Render so the limiter uses the client address behind that host's proxy.

@@ -21,11 +21,11 @@ The frontend runs on Vercel, the Express API runs on Render, and the database is
 ## Features
 
 - Signup, login, logout, expiring JWT sessions, and protected pantry/saved/shopping screens.
-- Private pantry: create, search, edit quantities, and delete with confirmation.
+- Private pantry: create, search, edit quantities with a unit dropdown (including no unit), and delete with confirmation.
 - TheMealDB recipe discovery, name search, details, and category filters through the Express API.
-- Ingredient alias normalization and recipe ranking by the share of ingredient names available in the pantry.
+- General ingredient normalization (case, spacing, accents, hyphens, English plurals, and common spelling variants) and recipe ranking by the share of ingredient names available in the pantry.
 - Recipe details with quantities, available/missing ingredients, instructions, and original/video links.
-- Saved recipes and a shopping checklist generated from missing ingredients, with duplicate prevention.
+- Saved recipes and a shopping checklist generated from missing ingredients, with duplicate prevention and automatic pantry additions when items are checked off.
 - Featured recipe carousel built with React state, JSX, CSS animations, and the existing SVG icon component.
 - Desktop and mobile layouts, keyboard navigation, reduced motion, loading/error/retry states, and form feedback.
 - An explicitly labeled demo kitchen with bundled sample data for reviewing the interface without database credentials.
@@ -46,7 +46,7 @@ flowchart LR
   Recipes --> MealDB[TheMealDB API]
 ```
 
-The API owns password hashing, signing secrets, database credentials, and per-user queries. Public recipe calls omit the private bearer token. Private data reloads from MongoDB after writes; logout or account changes discard the previous user's React state.
+The API owns password hashing, signing secrets, database credentials, and per-user queries. Public recipe calls omit the private bearer token. Private writes update React state from the API response; checking a shopping item also refreshes the pantry. Refreshing a page reloads persisted records from MongoDB. Logout or account changes discard the previous user's React state.
 
 ```text
 client/
@@ -74,10 +74,10 @@ scripts/            Live deployment acceptance check
 
 1. Open [FridgeChef](https://fridge-chef-ecru.vercel.app) in your browser.
 2. Choose **Sign in** or **Create an account**. Signup signs you in and opens your pantry.
-3. In **My pantry**, add ingredients and quantities. Edit or remove entries as needed; changes are saved to your account.
+3. In **My pantry**, add ingredients and quantities, choosing a measurement from **Unit** or **No unit** for counts. Edit or remove entries as needed; changes are saved to your account.
 4. Open **Discover recipes**, search by name, and enable **Pantry matches** to rank recipes using your ingredients.
 5. Open a recipe to see measurements, instructions, and available/missing ingredients. Save it with the heart button.
-6. Choose **Add missing to shopping list**, then open **Shopping** to check off items or clear picked-up items.
+6. Choose **Add missing to shopping list**, then open **Shopping** to check off items or clear picked-up items. Checked items are added to your pantry automatically; set their quantities there after shopping. Existing pantry quantities are kept.
 7. Refresh a page to reload saved data. Sign out when finished; each account has its own pantry, favorites, and shopping list.
 
 For sample data without signing up, open **Sign in → Try demo kitchen** on the deployed site. The banner identifies demo mode, and its changes stay in that browser. Exit demo before checking real authentication or database persistence.
@@ -155,6 +155,8 @@ The committed [Vercel configuration](client/vercel.json) rewrites app routes to 
 
 ## Verification
 
+The [current acceptance report](docs/ACCEPTANCE.md) records checks for the final feedback update. The team reports a **9/10 presentation score**; this is the presentation result, not a claim about the overall project grade.
+
 ### Automated checks
 
 [GitHub Actions](.github/workflows/ci.yml) runs on pushes and pull requests. It installs each application's dependencies and runs frontend lint, frontend unit tests, a production compile check, desktop/mobile browser tests, and backend tests.
@@ -195,6 +197,7 @@ The following documents explain the implementation and course deliverables. Mile
 
 - [Requirements and milestone audit](docs/CAPSTONE_MILESTONES.md): course references, checkpoint history, and submission evidence.
 - [Final wireframes and database schema](docs/DESIGN.md): screens, navigation, fields, types, indexes, and references.
+- [Current acceptance report](docs/ACCEPTANCE.md): teacher feedback coverage, automated checks, live verification, and remaining manual checks.
 - [API contract](docs/API_CONTRACT.md) and [frontend/course guide](docs/FRONTEND_GUIDE.md): routes, payloads, and course patterns.
 - [Security review](SECURITY.md): security controls and measured before/fix/after findings.
 - [Performance evidence](PERFORMANCE.md): build and Lighthouse comparisons.

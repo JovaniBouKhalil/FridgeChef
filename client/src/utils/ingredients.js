@@ -1,25 +1,6 @@
-const aliases = {
-  tomatoes: 'tomato',
-  onions: 'onion',
-  eggs: 'egg',
-  potatoes: 'potato',
-  'garlic clove': 'garlic',
-  'garlic cloves': 'garlic',
-  'chopped tomatoes': 'tomato',
-  'cherry tomatoes': 'tomato',
-  'spring onions': 'spring onion',
-  'chicken breast': 'chicken',
-  'chicken breasts': 'chicken',
-  'red onions': 'red onion',
-  'green onions': 'spring onion',
-  'penne rigate': 'penne',
-  'olive oil': 'olive oil',
-}
+import { normalizeIngredient } from './ingredientNames'
 
-export function normalizeIngredient(value = '') {
-  const name = value.toLowerCase().trim().replace(/\s+/g, ' ')
-  return aliases[name] || name
-}
+export { normalizeIngredient } from './ingredientNames'
 
 export function recipeIngredients(meal) {
   return Array.from({ length: 20 }, (_, index) => ({

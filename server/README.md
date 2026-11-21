@@ -4,7 +4,7 @@ The Express server provides authentication, private MongoDB-backed kitchen data,
 
 ## Setup
 
-Use Node.js 22 or newer. From `server/`:
+Use Node.js 24, matching the package engines and hosting configuration. From `server/`:
 
 ```sh
 npm ci

@@ -1,3 +1,5 @@
+import { formatQuantity } from './quantities'
+
 export function validateAuth(form, signup) {
   const errors = {}
   if (signup && form.name.trim().length < 2)
@@ -16,7 +18,10 @@ export function validateIngredient(form) {
   const errors = {}
   if (!form.ingredientName.trim())
     errors.ingredientName = 'Enter an ingredient name.'
-  if (!form.quantity.trim()) errors.quantity = 'Enter a quantity, e.g. 500 g.'
+  if (!form.quantity.trim())
+    errors.quantity = 'Enter a quantity, e.g. 2 or 0.5.'
+  else if (formatQuantity(form.quantity, form.unit).length > 50)
+    errors.quantity = 'Keep the quantity and unit within 50 characters.'
   return errors
 }
 

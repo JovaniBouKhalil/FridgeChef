@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { matchIngredients, rankRecipes, recipeIngredients } from './ingredients'
+import {
+  matchIngredients,
+  normalizeIngredient,
+  rankRecipes,
+  recipeIngredients,
+} from './ingredients'
 
 const pasta = {
   strMeal: 'Pasta',
@@ -11,6 +16,90 @@ const pasta = {
 }
 
 describe('ingredient matching', () => {
+  it.each([
+    ['ONIONS', 'onion'],
+    ['Potatoes', 'potato'],
+    ['POTATOS', 'potato'],
+    ['artichokes', 'artichoke'],
+    ['leeks', 'leek'],
+    ['radishes', 'radish'],
+    ['mushrooms', 'mushroom'],
+    ['berries', 'berry'],
+    ['strawberries', 'strawberry'],
+    ['peaches', 'peach'],
+    ['leaves', 'leaf'],
+    ['walnuts', 'walnut'],
+    ['anchovies', 'anchovy'],
+    ['mussels', 'mussel'],
+    ['tortillas', 'tortilla'],
+    ['Dried Bay Leaves', 'dried bay leaf'],
+    ['  RED   BELL PEPPERS  ', 'red bell pepper'],
+    ['black-eyed peas', 'black eyed pea'],
+    ['beans in brine', 'bean in brine'],
+    ['spring-onions', 'spring onion'],
+    ['garlic cloves', 'garlic'],
+    ['JALAPEÑOS', 'jalapeno'],
+    ['Chilies', 'chilli'],
+    ['Chillies', 'chilli'],
+    ['Yoghurt', 'yogurt'],
+    ['banannas', 'banana'],
+    ['avacados', 'avocado'],
+    ['brocolli', 'broccoli'],
+  ])('normalizes %s using general ingredient rules', (input, expected) => {
+    expect(normalizeIngredient(input)).toBe(expected)
+    expect(normalizeIngredient(expected)).toBe(expected)
+    expect(
+      matchIngredients({ strIngredient1: input }, [
+        { ingredientName: expected },
+      ]).percentage,
+    ).toBe(100)
+  })
+  it.each([
+    'asparagus',
+    'couscous',
+    'hummus',
+    'molasses',
+    'haggis',
+    'watercress',
+    'citrus',
+    'rice',
+    'salt',
+    'salmon',
+    'fish',
+    'swiss cheese',
+  ])('preserves singular and mass food names such as %s', (name) => {
+    expect(normalizeIngredient(name)).toBe(name)
+  })
+  it.each([
+    ['rice', 'rice flour'],
+    ['red pepper', 'black pepper'],
+    ['milk', 'coconut milk'],
+    ['chickpea', 'chicken'],
+    ['onion', 'union'],
+  ])('keeps %s separate from %s', (first, second) => {
+    expect(normalizeIngredient(first)).not.toBe(normalizeIngredient(second))
+  })
+  it.each(['tomato', ' TOmato ', 'tomatoes', 'tomatos', 'TOMATOS'])(
+    'treats %s as the same tomato ingredient',
+    (name) => {
+      expect(normalizeIngredient(name)).toBe('tomato')
+      expect(
+        matchIngredients(pasta, [{ ingredientName: name }]).available[0].name,
+      ).toBe('Tomatoes')
+    },
+  )
+  it('normalizes food plurals and internal spaces without collapsing different foods', () => {
+    expect(normalizeIngredient(' RED   ONIONS ')).toBe('red onion')
+    expect(normalizeIngredient('carrots')).toBe('carrot')
+    expect(normalizeIngredient('Cherry Tomato')).toBe('tomato')
+    expect(normalizeIngredient('red pepper')).not.toBe(
+      normalizeIngredient('black pepper'),
+    )
+    for (const name of ['rice', 'salt', 'asparagus', 'couscous']) {
+      expect(normalizeIngredient(name)).toBe(name)
+    }
+    expect(normalizeIngredient('constructor')).toBe('constructor')
+  })
   it('matches aliases and whitespace without treating unrelated ingredients as equivalent', () => {
     const result = matchIngredients(pasta, [
       { ingredientName: ' tomato ' },

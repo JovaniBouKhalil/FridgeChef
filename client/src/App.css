@@ -791,6 +791,17 @@ input::placeholder {
   flex-direction: column;
   gap: 16px;
 }
+.quantity-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 12px;
+}
+.quantity-hint {
+  margin-top: -10px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
 .field {
   display: flex;
   flex-direction: column;
@@ -802,7 +813,8 @@ input::placeholder {
   font-size: 14px;
   font-weight: 600;
 }
-.field input {
+.field input,
+.field select {
   display: block;
   width: 100%;
   min-height: 46px;

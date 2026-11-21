@@ -2,7 +2,9 @@
   "name": "client",
   "private": true,
   "version": "0.0.0",
-  "engines": { "node": "24.x" },
+  "engines": {
+    "node": "24.x"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -15,6 +17,7 @@
     "format": "prettier --write src"
   },
   "dependencies": {
+    "pluralize": "8.0.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-router-dom": "^7.18.5"

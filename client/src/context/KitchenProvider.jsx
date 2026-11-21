@@ -6,6 +6,7 @@ import { demoKitchen } from '../data/demoKitchen'
 import { readJSON } from '../utils/storage'
 import { normalizeIngredient } from '../utils/ingredients'
 import { KitchenContext } from './KitchenContext'
+import { unspecifiedQuantity } from '../utils/ingredientNames'
 
 const DEMO_KEY = 'fridgechef.demoKitchen.v1'
 
@@ -40,17 +41,46 @@ export default function KitchenProvider({ children }) {
 
   async function mutate(collection, method, values, id) {
     if (demo) {
-      setPreview((previous) => ({
-        ...previous,
-        [collection]:
-          method === 'POST'
-            ? [...previous[collection], { ...values, _id: crypto.randomUUID() }]
-            : method === 'DELETE'
-              ? previous[collection].filter((item) => item._id !== id)
-              : previous[collection].map((item) =>
-                  item._id === id ? { ...item, ...values } : item,
-                ),
-      }))
+      setPreview((previous) => {
+        const next = {
+          ...previous,
+          [collection]:
+            method === 'POST'
+              ? [
+                  ...previous[collection],
+                  { ...values, _id: crypto.randomUUID() },
+                ]
+              : method === 'DELETE'
+                ? previous[collection].filter((item) => item._id !== id)
+                : previous[collection].map((item) =>
+                    item._id === id ? { ...item, ...values } : item,
+                  ),
+        }
+        if (collection === 'shopping' && values?.checked) {
+          const purchased =
+            method === 'POST'
+              ? values
+              : previous.shopping.find((item) => item._id === id)
+          if (
+            purchased &&
+            !previous.pantry.some(
+              (item) =>
+                normalizeIngredient(item.ingredientName) ===
+                normalizeIngredient(purchased.ingredientName),
+            )
+          ) {
+            next.pantry = [
+              ...previous.pantry,
+              {
+                _id: crypto.randomUUID(),
+                ingredientName: purchased.ingredientName,
+                quantity: unspecifiedQuantity,
+              },
+            ]
+          }
+        }
+        return next
+      })
       return
     }
     if (!token)
@@ -65,10 +95,11 @@ export default function KitchenProvider({ children }) {
     requests[collection].updateData((current) => {
       const items = Array.isArray(current) ? current : []
       if (method === 'POST') return [...items, result]
-      if (method === 'DELETE')
-        return items.filter((item) => item._id !== id)
+      if (method === 'DELETE') return items.filter((item) => item._id !== id)
       return items.map((item) => (item._id === id ? result : item))
     })
+    if (collection === 'shopping' && values?.checked)
+      await pantryRequest.reload()
     return result
   }
 

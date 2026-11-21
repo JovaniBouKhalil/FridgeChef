@@ -33,7 +33,7 @@ function createMemoryModel(uniqueField) {
       (record) =>
         record._id.toString() !== exceptId &&
         record.userId.toString() === candidate.userId.toString() &&
-        record[uniqueField] === candidate[uniqueField]
+        record[uniqueField] === candidate[uniqueField],
     );
   }
 
@@ -47,6 +47,15 @@ function createMemoryModel(uniqueField) {
           records
             .filter((record) => record.userId.toString() === userId.toString())
             .map((record) => ({ ...record })),
+      };
+    },
+
+    findOne(filter) {
+      return {
+        lean: async () => {
+          const record = records.find((item) => isOwnedMatch(item, filter));
+          return record ? { ...record } : null;
+        },
       };
     },
 
@@ -88,7 +97,7 @@ function createMemoryModel(uniqueField) {
       return {
         lean: async () => {
           const index = records.findIndex((record) =>
-            isOwnedMatch(record, filter)
+            isOwnedMatch(record, filter),
           );
 
           if (index === -1) {
@@ -158,6 +167,209 @@ function request(baseUrl, method, path, userId, body) {
   });
 }
 
+test("ingredient aliases prevent duplicates in both collections, including older records", async () => {
+  const { app, pantryModel, shoppingModel } = createApiApp();
+  await withServer(app, async (baseUrl) => {
+    for (const [path, model] of [
+      ["pantry", pantryModel],
+      ["shopping", shoppingModel],
+    ]) {
+      const first = await request(baseUrl, "POST", `/api/${path}`, aliceId, {
+        ingredientName: "Tomatoes",
+        quantity: "2",
+      });
+      assert.equal(first.status, 201);
+      // Simulate a document saved before canonical normalization was added.
+      model.records[0].normalizedIngredientName = "tomatoes";
+      for (const ingredientName of [
+        "tomato",
+        " TOmato ",
+        "tomatoes",
+        "tomatos",
+      ]) {
+        const duplicate = await request(
+          baseUrl,
+          "POST",
+          `/api/${path}`,
+          aliceId,
+          {
+            ingredientName,
+            quantity: "1",
+          },
+        );
+        assert.equal(duplicate.status, 409, `${path}: ${ingredientName}`);
+      }
+      assert.equal(model.records.length, 1);
+    }
+    const carrotResponse = await request(
+      baseUrl,
+      "POST",
+      "/api/pantry",
+      aliceId,
+      {
+        ingredientName: "Carrots",
+        quantity: "3",
+      },
+    );
+    const carrot = await carrotResponse.json();
+    const duplicateEdit = await request(
+      baseUrl,
+      "PATCH",
+      `/api/pantry/${carrot._id}`,
+      aliceId,
+      {
+        ingredientName: "tomatos",
+      },
+    );
+    assert.equal(duplicateEdit.status, 409);
+    assert.equal(pantryModel.records[1].ingredientName, "Carrots");
+  });
+});
+
+test("checking shopping adds to the owner's pantry once and preserves existing quantities", async () => {
+  const { app, pantryModel } = createApiApp();
+  await withServer(app, async (baseUrl) => {
+    const response = await request(baseUrl, "POST", "/api/shopping", aliceId, {
+      ingredientName: "Tomatos",
+    });
+    const item = await response.json();
+    assert.equal(pantryModel.records.length, 0);
+    const unauthorized = await request(
+      baseUrl,
+      "PATCH",
+      `/api/shopping/${item._id}`,
+      bobId,
+      { checked: true },
+    );
+    assert.equal(unauthorized.status, 404);
+    assert.equal(pantryModel.records.length, 0);
+
+    for (const checked of [true, true, false, true]) {
+      const update = await request(
+        baseUrl,
+        "PATCH",
+        `/api/shopping/${item._id}`,
+        aliceId,
+        { checked },
+      );
+      assert.equal(update.status, 200);
+      assert.equal((await update.json()).checked, checked);
+      assert.equal(pantryModel.records.length, 1);
+    }
+    const pantryResponse = await request(
+      baseUrl,
+      "GET",
+      "/api/pantry",
+      aliceId,
+    );
+    const [pantryItem] = await pantryResponse.json();
+    assert.equal(pantryItem.ingredientName, "Tomatos");
+    assert.equal(pantryItem.quantity, "Not specified");
+    assert.equal(pantryModel.records[0].normalizedIngredientName, "tomato");
+    const bobPantry = await request(baseUrl, "GET", "/api/pantry", bobId);
+    assert.deepEqual(await bobPantry.json(), []);
+
+    // An existing legacy spelling/quantity must be kept when buying the same food.
+    pantryModel.records[0].ingredientName = "Tomatoes";
+    pantryModel.records[0].normalizedIngredientName = "tomatoes";
+    pantryModel.records[0].quantity = "500 g";
+    const recheck = await request(
+      baseUrl,
+      "PATCH",
+      `/api/shopping/${item._id}`,
+      aliceId,
+      { checked: true },
+    );
+    assert.equal(recheck.status, 200);
+    assert.equal(pantryModel.records.length, 1);
+    assert.equal(pantryModel.records[0].quantity, "500 g");
+    const remove = await request(
+      baseUrl,
+      "DELETE",
+      `/api/shopping/${item._id}`,
+      aliceId,
+    );
+    assert.equal(remove.status, 204);
+    assert.equal(pantryModel.records.length, 1);
+  });
+});
+
+test("general normalization prevents pantry and shopping duplicates beyond named food aliases", async () => {
+  const { app, pantryModel, shoppingModel } = createApiApp();
+  await withServer(app, async (baseUrl) => {
+    const foods = [
+      ["Artichokes", "artichoke"],
+      ["Radishes", "radish"],
+      ["Dried Bay Leaves", "dried bay leaf"],
+      ["Beans in brine", "bean in brine"],
+      ["Jalapeños", "jalapeno"],
+      ["Black-eyed peas", "black eyed pea"],
+      ["Avacados", "avocado"],
+      ["Mussels", "mussel"],
+    ];
+    for (const [collection, model] of [
+      ["pantry", pantryModel],
+      ["shopping", shoppingModel],
+    ]) {
+      for (const [ingredientName, canonical] of foods) {
+        const created = await request(
+          baseUrl,
+          "POST",
+          `/api/${collection}`,
+          aliceId,
+          { ingredientName, quantity: "2" },
+        );
+        assert.equal(created.status, 201, `${collection}: ${ingredientName}`);
+        // Duplicate checks also cover records saved under the previous rules.
+        model.records.at(-1).normalizedIngredientName =
+          ingredientName.toLowerCase();
+        const duplicate = await request(
+          baseUrl,
+          "POST",
+          `/api/${collection}`,
+          aliceId,
+          { ingredientName: `  ${canonical.toUpperCase()}  `, quantity: "1" },
+        );
+        assert.equal(duplicate.status, 409, `${collection}: ${canonical}`);
+      }
+      assert.equal(model.records.length, foods.length);
+    }
+  });
+});
+
+test("a failed pantry save leaves shopping unchecked and a retry safely completes", async () => {
+  const { app, pantryModel, shoppingModel } = createApiApp();
+  await withServer(app, async (baseUrl) => {
+    const response = await request(baseUrl, "POST", "/api/shopping", aliceId, {
+      ingredientName: "Salt",
+    });
+    const item = await response.json();
+    const originalCreate = pantryModel.create;
+    pantryModel.create = async () => {
+      throw new Error("Database unavailable");
+    };
+    const failed = await request(
+      baseUrl,
+      "PATCH",
+      `/api/shopping/${item._id}`,
+      aliceId,
+      { checked: true },
+    );
+    assert.equal(failed.status, 500);
+    assert.equal(shoppingModel.records[0].checked, false);
+    pantryModel.create = originalCreate;
+    const retried = await request(
+      baseUrl,
+      "PATCH",
+      `/api/shopping/${item._id}`,
+      aliceId,
+      { checked: true },
+    );
+    assert.equal(retried.status, 200);
+    assert.equal(pantryModel.records.length, 1);
+  });
+});
+
 test("all private routes reject missing and invalid authentication", async () => {
   const { app } = createApiApp();
   const id = new mongoose.Types.ObjectId().toString();
@@ -203,31 +415,30 @@ test("pantry CRUD is owner-scoped, validates fields, and rejects duplicates", as
         quantity: " 4 whole ",
         userId: bobId,
         normalizedIngredientName: "spoofed",
-      }
+      },
     );
     const created = await createResponse.json();
 
     assert.equal(createResponse.status, 201);
-    assert.deepEqual(Object.keys(created).sort(), ["_id", "ingredientName", "quantity"]);
+    assert.deepEqual(Object.keys(created).sort(), [
+      "_id",
+      "ingredientName",
+      "quantity",
+    ]);
     assert.equal(created.ingredientName, "Tomatoes");
     assert.equal(pantryModel.records[0].userId, aliceId);
-    assert.equal(pantryModel.records[0].normalizedIngredientName, "tomatoes");
+    assert.equal(pantryModel.records[0].normalizedIngredientName, "tomato");
 
     const duplicateResponse = await request(
       baseUrl,
       "POST",
       "/api/pantry",
       aliceId,
-      { ingredientName: "tomatoes", quantity: "1" }
+      { ingredientName: "tomatoes", quantity: "1" },
     );
     assert.equal(duplicateResponse.status, 409);
 
-    const bobListResponse = await request(
-      baseUrl,
-      "GET",
-      "/api/pantry",
-      bobId
-    );
+    const bobListResponse = await request(baseUrl, "GET", "/api/pantry", bobId);
     assert.deepEqual(await bobListResponse.json(), []);
 
     const bobPatchResponse = await request(
@@ -235,13 +446,13 @@ test("pantry CRUD is owner-scoped, validates fields, and rejects duplicates", as
       "PATCH",
       `/api/pantry/${created._id}`,
       bobId,
-      { quantity: "9" }
+      { quantity: "9" },
     );
     const bobDeleteResponse = await request(
       baseUrl,
       "DELETE",
       `/api/pantry/${created._id}`,
-      bobId
+      bobId,
     );
     assert.equal(bobPatchResponse.status, 404);
     assert.equal(bobDeleteResponse.status, 404);
@@ -251,7 +462,7 @@ test("pantry CRUD is owner-scoped, validates fields, and rejects duplicates", as
       "POST",
       "/api/pantry",
       bobId,
-      { ingredientName: "Tomatoes", quantity: "2" }
+      { ingredientName: "Tomatoes", quantity: "2" },
     );
     assert.equal(bobCreateResponse.status, 201);
 
@@ -259,7 +470,7 @@ test("pantry CRUD is owner-scoped, validates fields, and rejects duplicates", as
       baseUrl,
       "GET",
       "/api/pantry",
-      aliceId
+      aliceId,
     );
     const aliceItems = await aliceListResponse.json();
     assert.equal(aliceListResponse.status, 200);
@@ -275,7 +486,7 @@ test("pantry CRUD is owner-scoped, validates fields, and rejects duplicates", as
         ingredientName: "Cherry tomatoes",
         quantity: "2 boxes",
         userId: bobId,
-      }
+      },
     );
     const updated = await updateResponse.json();
 
@@ -296,7 +507,7 @@ test("pantry CRUD is owner-scoped, validates fields, and rejects duplicates", as
       baseUrl,
       "DELETE",
       `/api/pantry/${created._id}`,
-      aliceId
+      aliceId,
     );
     assert.equal(deleteResponse.status, 204);
     assert.equal(await deleteResponse.text(), "");
@@ -317,7 +528,7 @@ test("favorites are private, unique per user, and deleted by document ID", async
         recipeName: " Spicy Arrabiata Penne ",
         recipeImage: "https://example.test/recipe.jpg",
         userId: bobId,
-      }
+      },
     );
     const aliceFavorite = await aliceCreateResponse.json();
 
@@ -335,7 +546,7 @@ test("favorites are private, unique per user, and deleted by document ID", async
       "POST",
       "/api/favorites",
       aliceId,
-      { recipeId: "52771", recipeName: "Another title" }
+      { recipeId: "52771", recipeName: "Another title" },
     );
     assert.equal(duplicateResponse.status, 409);
 
@@ -343,7 +554,7 @@ test("favorites are private, unique per user, and deleted by document ID", async
       baseUrl,
       "GET",
       "/api/favorites",
-      bobId
+      bobId,
     );
     assert.deepEqual(await bobListResponse.json(), []);
 
@@ -351,7 +562,7 @@ test("favorites are private, unique per user, and deleted by document ID", async
       baseUrl,
       "DELETE",
       `/api/favorites/${aliceFavorite._id}`,
-      bobId
+      bobId,
     );
     assert.equal(bobDeleteResponse.status, 404);
 
@@ -360,7 +571,7 @@ test("favorites are private, unique per user, and deleted by document ID", async
       "POST",
       "/api/favorites",
       bobId,
-      { recipeId: "52771", recipeName: "Spicy Arrabiata Penne" }
+      { recipeId: "52771", recipeName: "Spicy Arrabiata Penne" },
     );
     assert.equal(bobCreateResponse.status, 201);
 
@@ -368,7 +579,7 @@ test("favorites are private, unique per user, and deleted by document ID", async
       baseUrl,
       "GET",
       "/api/favorites",
-      aliceId
+      aliceId,
     );
     assert.deepEqual(await aliceListResponse.json(), [aliceFavorite]);
 
@@ -376,7 +587,7 @@ test("favorites are private, unique per user, and deleted by document ID", async
       baseUrl,
       "DELETE",
       `/api/favorites/${aliceFavorite._id}`,
-      aliceId
+      aliceId,
     );
     assert.equal(deleteResponse.status, 204);
     assert.equal(await deleteResponse.text(), "");
@@ -396,7 +607,7 @@ test("shopping items are owner-scoped, duplicate-safe, and update checked only",
         ingredientName: " Chilli flakes ",
         checked: false,
         userId: bobId,
-      }
+      },
     );
     const aliceItem = await aliceCreateResponse.json();
 
@@ -407,14 +618,17 @@ test("shopping items are owner-scoped, duplicate-safe, and update checked only",
       checked: false,
     });
     assert.equal(shoppingModel.records[0].userId, aliceId);
-    assert.equal(shoppingModel.records[0].normalizedIngredientName, "chilli flakes");
+    assert.equal(
+      shoppingModel.records[0].normalizedIngredientName,
+      "chilli flake",
+    );
 
     const duplicateResponse = await request(
       baseUrl,
       "POST",
       "/api/shopping",
       aliceId,
-      { ingredientName: "chilli flakes", checked: false }
+      { ingredientName: "chilli flakes", checked: false },
     );
     assert.equal(duplicateResponse.status, 409);
 
@@ -423,7 +637,7 @@ test("shopping items are owner-scoped, duplicate-safe, and update checked only",
       "POST",
       "/api/shopping",
       bobId,
-      { ingredientName: "Chilli flakes", checked: false }
+      { ingredientName: "Chilli flakes", checked: false },
     );
     assert.equal(bobCreateResponse.status, 201);
 
@@ -431,7 +645,7 @@ test("shopping items are owner-scoped, duplicate-safe, and update checked only",
       baseUrl,
       "GET",
       "/api/shopping",
-      bobId
+      bobId,
     );
     const bobItems = await bobListResponse.json();
     assert.equal(bobItems.length, 1);
@@ -442,13 +656,13 @@ test("shopping items are owner-scoped, duplicate-safe, and update checked only",
       "PATCH",
       `/api/shopping/${aliceItem._id}`,
       bobId,
-      { checked: true }
+      { checked: true },
     );
     const bobDeleteResponse = await request(
       baseUrl,
       "DELETE",
       `/api/shopping/${aliceItem._id}`,
-      bobId
+      bobId,
     );
     assert.equal(bobPatchResponse.status, 404);
     assert.equal(bobDeleteResponse.status, 404);
@@ -458,7 +672,7 @@ test("shopping items are owner-scoped, duplicate-safe, and update checked only",
       "PATCH",
       `/api/shopping/${aliceItem._id}`,
       aliceId,
-      { checked: true, userId: bobId, ingredientName: "Ignored" }
+      { checked: true, userId: bobId, ingredientName: "Ignored" },
     );
     const patched = await patchResponse.json();
     assert.equal(patchResponse.status, 200);
@@ -474,7 +688,7 @@ test("shopping items are owner-scoped, duplicate-safe, and update checked only",
       baseUrl,
       "GET",
       "/api/shopping",
-      aliceId
+      aliceId,
     );
     assert.deepEqual(await aliceListResponse.json(), [patched]);
 
@@ -482,7 +696,7 @@ test("shopping items are owner-scoped, duplicate-safe, and update checked only",
       baseUrl,
       "DELETE",
       `/api/shopping/${aliceItem._id}`,
-      aliceId
+      aliceId,
     );
     assert.equal(deleteResponse.status, 204);
     assert.equal(await deleteResponse.text(), "");
@@ -498,9 +712,19 @@ test("private routes reject malformed document IDs and invalid request bodies", 
       ["PATCH", "/api/pantry/not-an-id", aliceId, { quantity: "1" }],
       ["DELETE", "/api/favorites/not-an-id", aliceId],
       ["POST", "/api/favorites", aliceId, { recipeId: "52771" }],
-      ["POST", "/api/shopping", aliceId, { ingredientName: "Tomatoes", checked: "false" }],
+      [
+        "POST",
+        "/api/shopping",
+        aliceId,
+        { ingredientName: "Tomatoes", checked: "false" },
+      ],
       ["PATCH", "/api/shopping/not-an-id", aliceId, { checked: true }],
-      ["PATCH", `/api/shopping/${new mongoose.Types.ObjectId()}`, aliceId, { checked: "true" }],
+      [
+        "PATCH",
+        `/api/shopping/${new mongoose.Types.ObjectId()}`,
+        aliceId,
+        { checked: "true" },
+      ],
     ];
 
     for (const [method, path, userId, body] of invalidRequests) {

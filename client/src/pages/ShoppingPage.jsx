@@ -228,7 +228,8 @@ export default function ShoppingPage() {
             already on this list won’t be added again.
           </p>
           <p className="small-text">
-            Check quantities in the recipe before shopping.
+            Checking an item adds it to your pantry automatically. Set its
+            quantity there after shopping. Unchecking keeps it in your pantry.
           </p>
           <Link to="/pantry" className="text-button">
             Check my pantry <Icon name="arrow" size={16} />

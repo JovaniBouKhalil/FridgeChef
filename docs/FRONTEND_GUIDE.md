@@ -14,15 +14,15 @@ The teacher PDFs were reviewed as project requirements and course references. Th
 | Chapter 19: JWT auth and protected routes | Signup/login payloads, bearer header, route protection, logout and private state reset |
 | Chapter 20 p. 6: one repo, client/server | Existing `client/` and `server/` folders, two-terminal setup in README |
 | Chapter 20 p. 9: shared API client | `src/api/client.js`: config-based origins, automatic token, status/error handling, auth expiry event |
-| Chapter 20 p. 10: `useApi` hook | `src/hooks/useApi.js`: data/loading/error/reload, cleanup, re-fetch after writes |
+| Chapter 20 p. 10: `useApi` hook | `src/hooks/useApi.js`: data/loading/error/reload, cleanup, updates from mutation responses, pantry refresh after a shopping purchase |
 | Chapter 20 pp. 12–14: auth state, provider, expiry | `src/auth/AuthProvider.jsx`, persisted token, `auth:expired` listener and cleanup |
 | Chapter 20 pp. 16–17: dev/prod environment | `.env.example`, ignored actual env files, configurable API origins, deployment instructions |
 | Final capstone: test, README, responsive UI, client routing | Vitest/RTL + desktop/mobile Playwright tests, root README, CSS breakpoints and React Router |
 | Chapter 21 pp. 18–20: throttling and security audit | Helmet, API/login rate limits, bounded input, and measured findings in `SECURITY.md` |
 | Chapter 22 p. 18: tests and performance evidence | Passing suites, production build comparison, and Lighthouse reports in `PERFORMANCE.md` |
-| Chapter 23 pp. 3, 6–11: hosting, config, CI | Vercel rewrite, Render Blueprint, GitHub Actions, and `docs/DEPLOYMENT.md`; actual publication remains pending account setup |
+| Chapter 23 pp. 3, 6–11: hosting, config, CI | Live Vercel frontend, Render API, Atlas persistence, SPA rewrites, GitHub Actions, and `docs/DEPLOYMENT.md` |
 
-Chapters 16 and 18 appear in the integrated Express/Mongoose backend in `server/`. The full-stack routes are implemented; live database and hosted-service acceptance checks still need completion.
+Chapters 16 and 18 appear in the integrated Express/Mongoose backend in `server/`. Public deployment URLs are in the root README; [the acceptance report](ACCEPTANCE.md) records the verification scope and remaining manual checks.
 
 ## Screen flow
 

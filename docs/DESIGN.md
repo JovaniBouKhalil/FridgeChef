@@ -92,12 +92,12 @@ Data: signup creates a User; login verifies its password hash. The API returns a
 +---------------------------+-----------------------------+
 | Add ingredient            | [Search ingredients_______] |
 | Ingredient [___________]  | Name, quantity [Edit][Remove]|
-| Quantity   [___________]  | Inline edit [Save][Cancel]  |
+| Quantity [____] Unit [v]  | Inline edit [Save][Cancel]  |
 | Field errors [Add]        | Removal confirmation        |
 +---------------------------+-----------------------------+
 ```
 
-Data: the authenticated user's PantryItems. Mobile shows the list first; an Add ingredient button opens and focuses the form. Create, update, and delete are API requests; fresh GET requests reload persisted values.
+Data: the authenticated user's PantryItems. Mobile shows the list first; an Add ingredient button opens and focuses the form. The Unit dropdown offers common measurements and No unit for counts. Original ingredient labels are retained for display; canonical keys enforce duplicate prevention and recipe matching. Create, update, and delete are API requests; fresh GET requests reload persisted values.
 
 ### Saved recipes — `/favorites`
 
@@ -124,7 +124,7 @@ Data: user-owned Favorites containing the provider recipe ID and display metadat
 +---------------------------------------------------------+
 ```
 
-Data: user-owned ShoppingItems. Recipe details can append deduplicated missing ingredients. Checking, deleting, and clearing checked items persist through the API.
+Data: user-owned ShoppingItems. Recipe details can append deduplicated missing ingredients. Checking an item adds it to the owner's pantry if absent, with quantity Not specified; existing pantry quantities remain unchanged. Unchecking or clearing the shopping item leaves pantry records intact. All checklist changes persist through the API.
 
 ### Featured recipes — `/featured`
 
@@ -197,8 +197,8 @@ erDiagram
 | Model | Validation and indexes |
 | --- | --- |
 | User | Name trimmed, 2–100 characters; normalized email up to 254 characters, validated on input; required bcrypt passwordHash excluded from ordinary queries; unique email index; timestamps. Signup passwords require at least 8 characters and at most 72 UTF-8 bytes. |
-| PantryItem | Required userId reference; ingredientName 1–80 characters; normalized lowercase key; quantity display string 1–50 characters. Unique `(userId, normalizedIngredientName)` and userId indexes. |
+| PantryItem | Required userId reference; ingredientName 1–80 characters; canonical ingredient key; quantity display string 1–50 characters. Add/edit forms combine the amount with a selected unit, or save the amount alone for No unit. Unique `(userId, normalizedIngredientName)` and userId indexes. |
 | Favorite | Required userId reference; numeric provider recipe ID of 1–10 digits; recipeName 1–200 characters; optional image URL up to 2,048 characters, checked for HTTP/HTTPS on input. Unique `(userId, recipeId)` and userId indexes. |
-| ShoppingItem | Required userId reference; ingredientName 1–80 characters; normalized lowercase key; Boolean checked defaults to false. Unique `(userId, normalizedIngredientName)` and userId indexes. |
+| ShoppingItem | Required userId reference; ingredientName 1–80 characters; canonical ingredient key using the same rules as the pantry; Boolean checked defaults to false. Unique `(userId, normalizedIngredientName)` and userId indexes. |
 
 The server chooses ownership from the verified JWT. Client-supplied userId fields cannot change ownership. Recipe contents belong to TheMealDB and are fetched through the public recipe service instead of being copied into a user collection. Demo browser storage is separate from these collections.

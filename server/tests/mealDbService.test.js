@@ -55,7 +55,7 @@ test("filterMealsByIngredient converts spaces for TheMealDB filter syntax", asyn
     baseUrl: "https://mealdb.test/v1",
     fetchImpl: async (url) => {
       requestedUrl = url;
-      return jsonResponse({ meals: [] });
+      return jsonResponse({ meals: [{ idMeal: "1" }] });
     },
   });
 
@@ -65,6 +65,61 @@ test("filterMealsByIngredient converts spaces for TheMealDB filter syntax", asyn
     requestedUrl.toString(),
     "https://mealdb.test/v1/filter.php?i=chicken_breast",
   );
+});
+
+test("normalized ingredient searches resolve the provider's plural spelling", async () => {
+  const requests = [];
+  const service = createMealDbService({
+    fetchImpl: async (url) => {
+      requests.push(url.pathname + url.search);
+      if (url.pathname.endsWith("/list.php"))
+        return jsonResponse({
+          meals: [
+            { strIngredient: "Mushrooms" },
+            { strIngredient: "Chilli Flakes" },
+          ],
+        });
+      const name = url.searchParams.get("i");
+      return jsonResponse({
+        meals: ["Mushrooms", "Chilli_Flakes"].includes(name)
+          ? [{ idMeal: name }]
+          : null,
+      });
+    },
+  });
+  assert.deepEqual(await service.filterMealsByIngredient("mushroom"), [
+    { idMeal: "Mushrooms" },
+  ]);
+  assert.deepEqual(await service.filterMealsByIngredient("chilli flake"), [
+    { idMeal: "Chilli_Flakes" },
+  ]);
+  assert.equal(requests.filter((path) => path.includes("/list.php")).length, 1);
+  assert.deepEqual(
+    await service.filterMealsByIngredient("unknown vegetable"),
+    [],
+  );
+});
+
+test("concurrent normalized ingredient searches share the catalog request", async () => {
+  let catalogReads = 0;
+  const service = createMealDbService({
+    fetchImpl: async (url) => {
+      if (url.pathname.endsWith("/list.php")) {
+        catalogReads += 1;
+        return jsonResponse({ meals: [{ strIngredient: "Mushrooms" }] });
+      }
+      return jsonResponse({
+        meals:
+          url.searchParams.get("i") === "Mushrooms" ? [{ idMeal: "1" }] : null,
+      });
+    },
+  });
+  const results = await Promise.all([
+    service.filterMealsByIngredient("mushroom"),
+    service.filterMealsByIngredient("MUSHROOM"),
+  ]);
+  assert.equal(catalogReads, 1);
+  assert.deepEqual(results, [[{ idMeal: "1" }], [{ idMeal: "1" }]]);
 });
 
 test("TheMealDB meals: null is normalized to an empty collection", async () => {

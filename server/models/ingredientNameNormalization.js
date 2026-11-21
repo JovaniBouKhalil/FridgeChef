@@ -1,7 +1,9 @@
+import { normalizeIngredient } from "../utils/ingredientNames.js";
+
 export function addIngredientNameNormalization(schema) {
   schema.pre("validate", function () {
     if (typeof this.ingredientName === "string") {
-      this.normalizedIngredientName = this.ingredientName.trim().toLowerCase();
+      this.normalizedIngredientName = normalizeIngredient(this.ingredientName);
     }
   });
 }

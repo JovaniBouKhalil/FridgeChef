@@ -2,13 +2,17 @@ import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
 
 // Chapter 23 live check. Credentials exist only in this process.
-const [frontendArgument, apiArgument] = process.argv.slice(2);
+const [frontendArgument, apiArgument, ...flags] = process.argv.slice(2);
 if (!frontendArgument || !apiArgument) {
   console.error(
-    "Usage: node scripts/verify-deployment.mjs <frontend-origin> <api-origin>",
+    "Usage: node scripts/verify-deployment.mjs <frontend-origin> <api-origin> [--browser]",
   );
   process.exit(2);
 }
+assert.ok(
+  flags.every((flag) => flag === "--browser"),
+  "Unknown verification option.",
+);
 
 function publicOrigin(value) {
   const url = new URL(value);
@@ -27,6 +31,7 @@ function publicOrigin(value) {
 const frontend = publicOrigin(frontendArgument);
 const api = publicOrigin(apiArgument);
 const created = [];
+const accounts = [];
 const password = randomBytes(24).toString("base64url");
 const suffix = `${Date.now()}-${randomBytes(4).toString("hex")}`;
 
@@ -44,12 +49,11 @@ async function request(
     },
     ...(body !== undefined && { body: JSON.stringify(body) }),
   });
-  assert.equal(
-    response.status,
-    status,
+  assert.ok(
+    (Array.isArray(status) ? status : [status]).includes(response.status),
     `${method} ${path}: unexpected HTTP status`,
   );
-  return status === 204 ? null : response.json();
+  return response.status === 204 ? null : response.json();
 }
 
 function passed(message) {
@@ -74,7 +78,6 @@ async function run() {
   await request("/api/pantry", { token: "invalid-token", status: 401 });
   passed("API health and protected-route rejection");
 
-  const accounts = [];
   for (const name of ["Alice", "Bob"]) {
     const email = `fridgechef-check-${name.toLowerCase()}-${suffix}@example.test`;
     const account = await request("/api/auth/signup", {
@@ -151,6 +154,31 @@ async function run() {
     "pantry create/read/update, persisted re-read, validation, and Bob/Alice isolation",
   );
 
+  for (const ingredientName of ["tomato", " TOMATOS ", "tomatoes"]) {
+    await request("/api/pantry", {
+      method: "POST",
+      token: alice.token,
+      status: 409,
+      body: { ingredientName, quantity: "1" },
+    });
+  }
+  const mushrooms = await request("/api/pantry", {
+    method: "POST",
+    token: alice.token,
+    status: 201,
+    body: { ingredientName: "Mushrooms", quantity: "250 g" },
+  });
+  created.push({ path: `/api/pantry/${mushrooms._id}`, token: alice.token });
+  await request("/api/pantry", {
+    method: "POST",
+    token: alice.token,
+    status: 409,
+    body: { ingredientName: "MUSHROOM", quantity: "1" },
+  });
+  passed(
+    "general singular/plural and spelling normalization prevents pantry duplicates",
+  );
+
   const favorite = await request("/api/favorites", {
     method: "POST",
     token: alice.token,
@@ -183,8 +211,57 @@ async function run() {
     true,
   );
   assert.deepEqual(await request("/api/shopping", { token: bob.token }), []);
+  const afterPurchase = await request("/api/pantry", { token: alice.token });
+  const garlic = afterPurchase.filter(
+    (item) => item.ingredientName.toLowerCase() === "garlic",
+  );
+  assert.equal(
+    garlic.length,
+    1,
+    "Checking shopping must add the pantry ingredient once",
+  );
+  created.push({ path: `/api/pantry/${garlic[0]._id}`, token: alice.token });
+  assert.equal(
+    garlic[0].quantity,
+    "Not specified",
+    "Never invent a purchased amount",
+  );
+  for (const checked of [false, true, true]) {
+    await request(`/api/shopping/${shopping._id}`, {
+      method: "PATCH",
+      token: alice.token,
+      body: { checked },
+    });
+  }
+  assert.equal(
+    (await request("/api/pantry", { token: alice.token })).length,
+    afterPurchase.length,
+  );
+  const existingPurchase = await request("/api/shopping", {
+    method: "POST",
+    token: alice.token,
+    status: 201,
+    body: { ingredientName: "Tomatos", checked: false },
+  });
+  created.push({
+    path: `/api/shopping/${existingPurchase._id}`,
+    token: alice.token,
+  });
+  await request(`/api/shopping/${existingPurchase._id}`, {
+    method: "PATCH",
+    token: alice.token,
+    body: { checked: true },
+  });
+  const afterExistingPurchase = await request("/api/pantry", {
+    token: alice.token,
+  });
+  assert.equal(afterExistingPurchase.length, afterPurchase.length);
+  assert.equal(
+    afterExistingPurchase.find((item) => item._id === pantry._id).quantity,
+    "2 whole",
+  );
   passed(
-    "saved recipes, duplicate prevention, shopping updates, and private lists",
+    "saved recipes, private lists, persisted shopping transfers, repeat-check safety, and preservation of existing amounts",
   );
 
   const recipes = await request("/api/recipes/search?name=pasta");
@@ -196,6 +273,15 @@ async function run() {
     (await request("/api/recipes/52771")).meals?.[0]?.idMeal,
     "52771",
   );
+  for (const ingredient of ["mushroom", "chilli flake"]) {
+    const candidates = await request(
+      `/api/recipes?ingredient=${encodeURIComponent(ingredient)}`,
+    );
+    assert.ok(
+      candidates.meals?.length > 0,
+      `Normalized ${ingredient} must find provider recipes`,
+    );
+  }
   const preflight = await fetch(`${api}/api/pantry`, {
     method: "OPTIONS",
     headers: {
@@ -207,20 +293,52 @@ async function run() {
   });
   assert.equal(preflight.headers.get("access-control-allow-origin"), frontend);
   passed("live TheMealDB proxy and production CORS origin");
+  if (flags.includes("--browser")) {
+    const { verifyLiveBrowser } = await import("./verify-browser.mjs");
+    await verifyLiveBrowser(frontend, alice, password, passed);
+  }
 }
 
 try {
   await run();
 } catch (error) {
-  console.error(`FAIL ${error.message}`);
+  let message = error.message;
+  for (const value of [
+    password,
+    ...accounts.flatMap((account) => [account.token, account.email]),
+  ]) {
+    if (value) message = message.replaceAll(value, "[redacted]");
+  }
+  console.error(`FAIL ${message}`);
   process.exitCode = 1;
 } finally {
+  // Include records created by shopping transfer or the optional browser check,
+  // even if an assertion failed before the response could be recorded above.
+  for (const account of accounts) {
+    for (const collection of ["pantry", "favorites", "shopping"]) {
+      try {
+        const items = await request(`/api/${collection}`, {
+          token: account.token,
+        });
+        for (const item of items) {
+          const path = `/api/${collection}/${item._id}`;
+          if (!created.some((resource) => resource.path === path))
+            created.push({ path, token: account.token });
+        }
+      } catch {
+        console.error(
+          `Could not discover generated ${collection} records for cleanup.`,
+        );
+        process.exitCode = 1;
+      }
+    }
+  }
   for (const item of created.reverse()) {
     try {
       await request(item.path, {
         method: "DELETE",
         token: item.token,
-        status: 204,
+        status: [204, 404],
       });
     } catch {
       console.error(

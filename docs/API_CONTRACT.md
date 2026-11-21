@@ -47,7 +47,9 @@ The frontend stores the JWT and user profile in `fridgechef.token` and `fridgech
 { "_id": "a-mongodb-id", "ingredientName": "Tomatoes", "quantity": "4 whole" }
 ```
 
-`ingredientName` is a required trimmed string (max 80), `quantity` is a required display string (max 50), e.g. `500 g`, `2 bulbs`. The client checks duplicates on add; the server should enforce user-specific, normalized uniqueness as well. Schema ownership: `userId: ObjectId → Users`.
+`ingredientName` is a required trimmed string (max 80), `quantity` is a required display string (max 50), e.g. `500 g`, `2 bulbs`. The add/edit form offers a separate unit dropdown and combines the amount and selected unit in this string; selecting **No unit** saves the amount alone, e.g. `2`. Existing free-text quantities and saved units remain editable.
+
+Client and server enforce user-specific ingredient uniqueness using identical normalization rules: case, surrounding/repeated whitespace, accents, hyphens, and general English singular/plural rules applied to every word. This covers ingredients beyond a fixed list, including `artichokes` / `artichoke`, `berries` / `berry`, `leaves` / `leaf`, and multiword names such as `dried bay leaves` / `dried bay leaf`. Explicit aliases handle common spelling variants such as `avacado` / `avocado`, `chili` / `chilli`, and `yoghurt` / `yogurt`. Mass nouns such as asparagus, couscous, and molasses are preserved. Different ingredients such as red pepper and black pepper remain distinct; arbitrary typos are not automatically merged. The server also checks names on older records using the current rules. The normalization module is mirrored within each independently deployed app; a contract test prevents the copies drifting. Schema ownership: `userId: ObjectId → Users`.
 
 ## Favorites
 
@@ -76,7 +78,9 @@ The frontend stores the JWT and user profile in `fridgechef.token` and `fridgech
 { "_id": "a-mongodb-id", "ingredientName": "Chilli flakes", "checked": false }
 ```
 
-`ingredientName` is a required string (max 80). `checked` must be a boolean. Enforce uniqueness on normalized ingredient name per owner. “Add missing” deduplicates pantry gaps against the existing shopping list and issues sequential POSTs. If a request fails, earlier successful additions remain; the UI shows the error and the refreshed list supports retry. The client does not merge or calculate quantities. “Clear picked up” deletes the checked documents sequentially.
+`ingredientName` is a required string (max 80). `checked` must be a boolean. Ingredient names use the same per-owner normalization as the pantry. “Add missing” deduplicates pantry gaps against the existing shopping list and issues sequential POSTs. If a request fails, earlier successful additions remain; the UI shows the error and supports retry.
+
+Setting `checked: true` ensures the ingredient exists in that owner's pantry before marking the shopping item checked. Creating an already-checked item follows the same rule. New pantry items use quantity `Not specified`, since the shopping list does not record purchased amounts. Existing pantry items and their quantities are preserved; retries/rechecking do not create duplicate pantry items. A failed pantry save leaves the shopping item unchecked. The client refreshes pantry state after a successful check; demo mode applies the same behavior to local storage. Unchecking or deleting a shopping item leaves the pantry intact. “Clear picked up” deletes the checked shopping documents sequentially.
 
 ## Recipe provider
 
@@ -94,6 +98,8 @@ Responses preserve `{ "meals": [...] }`. Missing search/ingredient values return
 The service normalizes the 20 `strIngredientN`/`strMeasureN` slots in each full recipe. Pantry recommendations collect candidates for up to five unique pantry names, keep at most 24 distinct candidates, fetch full details in batches of six, then rank by the percentage of ingredient names present. It is a bounded candidate selection, not an exhaustive search of the entire database. Typed name searches rank within the returned name results when pantry matches are enabled. Category chips filter the loaded result set.
 
 Ingredient matching and recipe ranking remain in `client/src/utils/ingredients.js`; external HTTP behavior lives in `server/services/mealDbService.js`. The UI does not contain provider credentials or duplicate upstream fetch code.
+
+If an ingredient filter returns no recipes, the API reads the provider's ingredient catalog (`list.php?i=list`), compares names using the same normalization rules, and retries with the provider's spelling. For example, normalized `mushroom` resolves to `Mushrooms`. The catalog uses the bounded upstream cache; concurrent lookups share the same request. Unknown ingredients still return an empty collection, and provider failures remain controlled 502 responses.
 
 ## Two-user handoff check
 

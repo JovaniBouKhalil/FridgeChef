@@ -1,5 +1,7 @@
 import express from "express";
 import PantryItem from "../models/PantryItem.js";
+import { normalizeIngredient } from "../utils/ingredientNames.js";
+import { findOwnedIngredient } from "../services/pantryIngredients.js";
 import {
   addDocumentIdValidation,
   sendDuplicateConflict,
@@ -45,10 +47,24 @@ export function createPantryRouter({ pantryModel = PantryItem } = {}) {
     }
 
     try {
+      if (
+        await findOwnedIngredient(
+          pantryModel,
+          req.user.id,
+          fields.ingredientName,
+        )
+      ) {
+        return res
+          .status(409)
+          .json({
+            error:
+              "This ingredient is already in your pantry. Edit its quantity instead.",
+          });
+      }
       const item = await pantryModel.create({
         userId: req.user.id,
         ...fields,
-        normalizedIngredientName: fields.ingredientName.toLowerCase(),
+        normalizedIngredientName: normalizeIngredient(fields.ingredientName),
       });
 
       return res.status(201).json(toPantryDto(item));
@@ -72,10 +88,28 @@ export function createPantryRouter({ pantryModel = PantryItem } = {}) {
 
     const update = { ...fields };
     if (fields.ingredientName !== undefined) {
-      update.normalizedIngredientName = fields.ingredientName.toLowerCase();
+      update.normalizedIngredientName = normalizeIngredient(
+        fields.ingredientName,
+      );
     }
 
     try {
+      if (
+        fields.ingredientName !== undefined &&
+        (await findOwnedIngredient(
+          pantryModel,
+          req.user.id,
+          fields.ingredientName,
+          req.params.id,
+        ))
+      ) {
+        return res
+          .status(409)
+          .json({
+            error:
+              "This ingredient is already in your pantry. Edit its quantity instead.",
+          });
+      }
       const item = await pantryModel
         .findOneAndUpdate(
           { _id: req.params.id, userId: req.user.id },

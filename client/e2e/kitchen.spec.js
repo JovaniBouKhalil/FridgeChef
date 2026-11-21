@@ -132,10 +132,11 @@ test('demo kitchen supports pantry CRUD, saving, and a deduplicated shopping che
   })
   if (await ingredientForm.isVisible()) await ingredientForm.click()
   await page.getByLabel('Ingredient', { exact: true }).fill('Carrots')
-  await page.getByLabel('Quantity', { exact: true }).fill('3 whole')
+  await page.getByLabel('Quantity', { exact: true }).fill('3')
+  await page.getByLabel('Unit', { exact: true }).selectOption('whole')
   await page.getByRole('button', { name: 'Add ingredient' }).click()
   await page.getByRole('button', { name: 'Edit Carrots' }).click()
-  await page.getByLabel('Quantity', { exact: true }).last().fill('5 whole')
+  await page.getByLabel('Quantity', { exact: true }).last().fill('5')
   await page.getByRole('button', { name: 'Save changes' }).click()
   await page.reload()
   await expect(page.getByText('5 whole', { exact: true })).toBeVisible()
@@ -264,7 +265,8 @@ test('real API mode signs in, writes with a bearer token, and handles session ex
   })
   if (await ingredientForm.isVisible()) await ingredientForm.click()
   await page.getByLabel('Ingredient', { exact: true }).fill('Cucumber')
-  await page.getByLabel('Quantity', { exact: true }).fill('2 whole')
+  await page.getByLabel('Quantity', { exact: true }).fill('2')
+  await page.getByLabel('Unit', { exact: true }).selectOption('whole')
   await page.getByRole('button', { name: 'Add ingredient' }).click()
   await expect(page.getByText('Cucumber', { exact: true })).toBeVisible()
   expect(pantry[0]).toMatchObject({
@@ -280,4 +282,88 @@ test('real API mode signs in, writes with a bearer token, and handles session ex
   expect(
     await page.evaluate(() => localStorage.getItem('fridgechef.token')),
   ).toBeNull()
+})
+
+test('ingredient aliases, measurement choices, and shopping-to-pantry updates work together', async ({
+  page,
+}, testInfo) => {
+  await page.addInitScript(() => {
+    sessionStorage.setItem('fridgechef.demo', 'true')
+    if (!localStorage.getItem('fridgechef.demoKitchen.v1')) {
+      localStorage.setItem(
+        'fridgechef.demoKitchen.v1',
+        JSON.stringify({ pantry: [], favorites: [], shopping: [] }),
+      )
+    }
+  })
+  await page.goto('/pantry')
+  await expect(
+    page.getByRole('heading', { name: 'My pantry', exact: true }),
+  ).toBeVisible()
+  const addForm = page.getByRole('button', {
+    name: 'Add an ingredient',
+    exact: true,
+  })
+  if (testInfo.project.name === 'mobile') await addForm.click()
+  await page.getByLabel('Ingredient', { exact: true }).fill('Artichokes')
+  await page.getByLabel('Quantity', { exact: true }).fill('2')
+  await expect(page.getByLabel('Unit', { exact: true })).toHaveValue('')
+  await page
+    .getByRole('button', { name: 'Add ingredient', exact: true })
+    .click()
+  await expect(
+    page.locator('.pantry-item').filter({ hasText: 'Artichokes' }),
+  ).toContainText('2')
+  if (testInfo.project.name === 'mobile') await addForm.click()
+  for (const name of ['ARTICHOKE', 'artichoke', ' ARTICHOKES ']) {
+    await page.getByLabel('Ingredient', { exact: true }).fill(name)
+    await page.getByLabel('Quantity', { exact: true }).fill('1')
+    await page
+      .getByRole('button', { name: 'Add ingredient', exact: true })
+      .click()
+    await expect(page.getByRole('alert')).toContainText(
+      'already in your pantry',
+    )
+    await expect(page.locator('.pantry-item')).toHaveCount(1)
+  }
+  await page.getByLabel('Ingredient', { exact: true }).fill('Salt')
+  await page.getByLabel('Quantity', { exact: true }).fill('0.5')
+  await page.getByLabel('Unit', { exact: true }).selectOption('tsp')
+  await page.screenshot({
+    path: testInfo.outputPath('ingredient-units.png'),
+    fullPage: true,
+  })
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true)
+  await page
+    .getByRole('button', { name: 'Add ingredient', exact: true })
+    .click()
+  await expect(
+    page.locator('.pantry-item').filter({ hasText: 'Salt' }),
+  ).toContainText('0.5 tsp')
+  await page.reload()
+  await expect(
+    page.locator('.pantry-item').filter({ hasText: 'Salt' }),
+  ).toContainText('0.5 tsp')
+  await page.goto('/shopping')
+  for (const name of ['artichoke', 'Carrots']) {
+    await page.getByLabel('Add to shopping list').fill(name)
+    await page.getByRole('button', { name: 'Add', exact: true }).click()
+    await page.getByRole('checkbox', { name, exact: true }).check()
+    await expect(
+      page.getByRole('checkbox', { name, exact: true }),
+    ).toBeChecked()
+  }
+  await page.getByRole('button', { name: 'Clear picked up' }).click()
+  await page.goto('/pantry')
+  await expect(page.locator('.pantry-item')).toHaveCount(3)
+  await expect(
+    page.locator('.pantry-item').filter({ hasText: 'Carrots' }),
+  ).toContainText('Not specified')
+  await expect(
+    page.locator('.pantry-item').filter({ hasText: 'Artichokes' }),
+  ).toContainText('2')
 })

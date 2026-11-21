@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { readFile } from "node:fs/promises";
 import Favorite from "../models/Favorite.js";
 import PantryItem from "../models/PantryItem.js";
 import ShoppingItem from "../models/ShoppingItem.js";
@@ -7,12 +8,28 @@ import User from "../models/User.js";
 
 const userId = "0123456789abcdef01234567";
 
-function hasUniqueIndex(schema, keys) {
-  return schema.indexes().some(
-    ([indexKeys, options]) =>
-      JSON.stringify(indexKeys) === JSON.stringify(keys) &&
-      options.unique === true
+test("independently deployed client and server ship identical ingredient rules", async () => {
+  const [clientRules, serverRules] = await Promise.all([
+    readFile(
+      new URL("../../client/src/utils/ingredientNames.js", import.meta.url),
+      "utf8",
+    ),
+    readFile(new URL("../utils/ingredientNames.js", import.meta.url), "utf8"),
+  ]);
+  assert.equal(
+    clientRules.replaceAll("\r\n", "\n"),
+    serverRules.replaceAll("\r\n", "\n"),
   );
+});
+
+function hasUniqueIndex(schema, keys) {
+  return schema
+    .indexes()
+    .some(
+      ([indexKeys, options]) =>
+        JSON.stringify(indexKeys) === JSON.stringify(keys) &&
+        options.unique === true,
+    );
 }
 
 function assertUserOwnership(model) {
@@ -48,7 +65,7 @@ test("User rejects names shorter than two characters", async () => {
 
   await assert.rejects(
     user.validate(),
-    (error) => error.errors.name?.kind === "minlength"
+    (error) => error.errors.name?.kind === "minlength",
   );
 });
 
@@ -62,7 +79,7 @@ test("PantryItem normalizes ingredient names and has an owner-scoped unique inde
   await item.validate();
 
   assert.equal(item.ingredientName, "Fresh Tomatoes");
-  assert.equal(item.normalizedIngredientName, "fresh tomatoes");
+  assert.equal(item.normalizedIngredientName, "fresh tomato");
   assert.equal(item.quantity, "500 g");
   assertUserOwnership(PantryItem);
   assert.equal(
@@ -70,8 +87,32 @@ test("PantryItem normalizes ingredient names and has an owner-scoped unique inde
       userId: 1,
       normalizedIngredientName: 1,
     }),
-    true
+    true,
   );
+});
+
+test("pantry and shopping models share canonical spelling and plural rules", async () => {
+  for (const Model of [PantryItem, ShoppingItem]) {
+    for (const [ingredientName, expected] of [
+      ["tomato", "tomato"],
+      [" TOmato ", "tomato"],
+      ["tomatoes", "tomato"],
+      ["tomatos", "tomato"],
+      ["ONIONS", "onion"],
+      ["artichokes", "artichoke"],
+      ["radishes", "radish"],
+      ["Dried Bay Leaves", "dried bay leaf"],
+      ["beans in brine", "bean in brine"],
+      ["JALAPEÑOS", "jalapeno"],
+      ["black-eyed peas", "black eyed pea"],
+      ["avacados", "avocado"],
+      ["molasses", "molasses"],
+    ]) {
+      const item = new Model({ userId, ingredientName, quantity: "2" });
+      await item.validate();
+      assert.equal(item.normalizedIngredientName, expected);
+    }
+  }
 });
 
 test("PantryItem enforces ingredient and quantity maximum lengths", async () => {
@@ -85,7 +126,7 @@ test("PantryItem enforces ingredient and quantity maximum lengths", async () => 
     item.validate(),
     (error) =>
       error.errors.ingredientName?.kind === "maxlength" &&
-      error.errors.quantity?.kind === "maxlength"
+      error.errors.quantity?.kind === "maxlength",
   );
 });
 
@@ -103,7 +144,7 @@ test("Favorite allows missing recipe image and is unique per user and recipe", a
   assertUserOwnership(Favorite);
   assert.equal(
     hasUniqueIndex(Favorite.schema, { userId: 1, recipeId: 1 }),
-    true
+    true,
   );
 });
 
@@ -117,13 +158,13 @@ test("ShoppingItem defaults checked and normalizes its owner-scoped ingredient k
 
   assert.equal(item.checked, false);
   assert.equal(item.ingredientName, "Chilli flakes");
-  assert.equal(item.normalizedIngredientName, "chilli flakes");
+  assert.equal(item.normalizedIngredientName, "chilli flake");
   assertUserOwnership(ShoppingItem);
   assert.equal(
     hasUniqueIndex(ShoppingItem.schema, {
       userId: 1,
       normalizedIngredientName: 1,
     }),
-    true
+    true,
   );
 });

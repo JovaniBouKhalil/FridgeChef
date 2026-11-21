@@ -1,5 +1,11 @@
 import express from "express";
 import ShoppingItem from "../models/ShoppingItem.js";
+import PantryItem from "../models/PantryItem.js";
+import { normalizeIngredient } from "../utils/ingredientNames.js";
+import {
+  ensurePantryIngredient,
+  findOwnedIngredient,
+} from "../services/pantryIngredients.js";
 import {
   addDocumentIdValidation,
   sendDuplicateConflict,
@@ -23,12 +29,15 @@ function readShoppingIngredient(body) {
   return (
     fields && {
       ...fields,
-      normalizedIngredientName: fields.ingredientName.toLowerCase(),
+      normalizedIngredientName: normalizeIngredient(fields.ingredientName),
     }
   );
 }
 
-export function createShoppingRouter({ shoppingModel = ShoppingItem } = {}) {
+export function createShoppingRouter({
+  shoppingModel = ShoppingItem,
+  pantryModel = PantryItem,
+} = {}) {
   const router = express.Router();
   addDocumentIdValidation(router, "Shopping item");
 
@@ -51,6 +60,24 @@ export function createShoppingRouter({ shoppingModel = ShoppingItem } = {}) {
     }
 
     try {
+      if (
+        await findOwnedIngredient(
+          shoppingModel,
+          req.user.id,
+          fields.ingredientName,
+        )
+      ) {
+        return res
+          .status(409)
+          .json({ error: "This ingredient is already on your list." });
+      }
+      if (fields.checked) {
+        await ensurePantryIngredient(
+          pantryModel,
+          req.user.id,
+          fields.ingredientName,
+        );
+      }
       const item = await shoppingModel.create({
         userId: req.user.id,
         ...fields,
@@ -75,6 +102,22 @@ export function createShoppingRouter({ shoppingModel = ShoppingItem } = {}) {
     }
 
     try {
+      const existing = await shoppingModel
+        .findOne({
+          _id: req.params.id,
+          userId: req.user.id,
+        })
+        .lean();
+      if (!existing) {
+        return res.status(404).json({ error: "Shopping item not found." });
+      }
+      if (fields.checked) {
+        await ensurePantryIngredient(
+          pantryModel,
+          req.user.id,
+          existing.ingredientName,
+        );
+      }
       const item = await shoppingModel
         .findOneAndUpdate(
           { _id: req.params.id, userId: req.user.id },

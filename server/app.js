@@ -94,7 +94,10 @@ export function createApp(options = {}) {
   app.use(
     "/api/shopping",
     authenticateToken,
-    createShoppingRouter({ shoppingModel: options.shoppingModel }),
+    createShoppingRouter({
+      shoppingModel: options.shoppingModel,
+      pantryModel: options.pantryModel,
+    }),
   );
 
   app.use(notFound);

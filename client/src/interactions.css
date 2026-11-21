@@ -106,6 +106,7 @@
 
 /* Field feedback stays beside its input and leaves labels visible. */
 .field input,
+.field select,
 .shopping-add-form input {
   transition:
     border-color 160ms ease,

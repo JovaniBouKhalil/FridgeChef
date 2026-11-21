@@ -2,7 +2,7 @@
 
 The course setup is a Vite/React frontend on Vercel, an Express/Node API on Render, and MongoDB in Atlas. The application remains JavaScript, JSX, HTML, and CSS. Hosting settings do not require another application framework.
 
-**Current state: not deployed.** The repository contains deployment configuration; account access and production database settings are still needed. A successful local build is not a public deployment.
+**Current state: deployed.** The frontend is [FridgeChef on Vercel](https://fridge-chef-ecru.vercel.app), the API is [FridgeChef on Render](https://fridgechef-api-xvri.onrender.com/api/health), and persistence uses MongoDB Atlas. Both public endpoints responded successfully on **21 November 2026**. The settings below explain how the deployment is configured and how to reproduce it. The latest feedback changes must pass the live acceptance check after deployment.
 
 ## 1. Database
 
@@ -32,7 +32,7 @@ Set these environment variables in Render:
 | `MONGODB_URI` | The team's private Atlas connection URI |
 | `JWT_SECRET` | Generated random secret of at least 32 bytes; the Blueprint can generate it |
 | `JWT_EXPIRES_IN` | `1d` |
-| `CLIENT_ORIGIN` | The exact stable Vercel frontend origin, beginning with HTTPS and without a trailing slash |
+| `CLIENT_ORIGIN` | `https://fridge-chef-ecru.vercel.app` |
 | `TRUST_PROXY_HOPS` | `1` for the Render reverse proxy |
 | `MEALDB_URL` | `https://www.themealdb.com/api/json/v1/1` |
 
@@ -44,7 +44,7 @@ This follows [Render's Express deployment process](https://render.com/docs/deplo
 
 Import the same GitHub repository in Vercel, choose **Vite**, and set **Root Directory** to `client`. Use `npm ci`, `npm run build`, and output directory `dist`; [client/vercel.json](../client/vercel.json) also records these values.
 
-Set `VITE_API_URL` in the production build environment to the real HTTPS Render API origin, without `/api`. For example, if the host returns an origin, use that exact origin rather than guessing it. Vite replaces this value during the build, so changing it requires a redeploy. A production build rejects a missing, HTTP, or localhost API origin.
+Set `VITE_API_URL=https://fridgechef-api-xvri.onrender.com` in the production build environment, without `/api`. For a separate deployment, use its actual API origin. Vite replaces this value during the build, so changing it requires a redeploy. A production build rejects a missing, HTTP, or localhost API origin.
 
 The committed rewrite serves `index.html` on application routes, following the [official Vite SPA configuration](https://vercel.com/docs/frameworks/frontend/vite#using-vite-to-make-spas). Verify that directly opening and refreshing `/pantry`, `/featured`, and `/recipes/52771` loads the app. The production URL must be accessible to the grader without signing into Vercel.
 
@@ -57,10 +57,12 @@ Production startup intentionally fails when `CLIENT_ORIGIN` is missing. This fol
 Run the deployment verifier from the repository root using the two real URLs:
 
 ```sh
-node scripts/verify-deployment.mjs https://YOUR-FRONTEND-ORIGIN https://YOUR-API-ORIGIN
+node scripts/verify-deployment.mjs https://fridge-chef-ecru.vercel.app https://fridgechef-api-xvri.onrender.com
 ```
 
 The script creates two labeled test accounts, checks public routes and recipe requests, exercises private CRUD, confirms ownership isolation, and removes the resource records it creates. The two test account records remain because the application has no account deletion endpoint. Passwords and tokens stay in process memory and are not printed.
+
+For an actual desktop/mobile browser walkthrough against these same live services, install the frontend development dependencies and Playwright Chromium, then append `--browser` to the command. This reuses the generated account, signs in through the UI at 1440px and 390px, checks units, duplicate feedback, refresh persistence, shopping-to-pantry updates, edits/deletion, layout, and logout. It uses no mocked API responses. `PLAYWRIGHT_CHANNEL=chrome` can select an already-installed Chrome browser. Generated private records are cleaned up even if a check fails.
 
 Then use a phone on mobile data, outside demo mode:
 
@@ -72,7 +74,7 @@ Then use a phone on mobile data, outside demo mode:
 6. Confirm no uncaught browser errors, failed API requests, or CORS errors.
 7. Open both public URLs from another device and test page refreshes.
 
-Record the date and results in the milestone checklist and replace the pending values at the top of the root README with the actual URLs. Milestone 4 is complete only after this works on the deployed services.
+Record the date and results in [the acceptance report](ACCEPTANCE.md). The root README already lists the public URLs. Repeat the acceptance check after functional updates; local mocked tests and successful health checks alone do not verify database persistence.
 
 ## 5. Continuous integration
 

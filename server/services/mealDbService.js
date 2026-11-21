@@ -1,4 +1,5 @@
 import { HttpError } from "../utils/HttpError.js";
+import { normalizeIngredient } from "../utils/ingredientNames.js";
 
 const DEFAULT_BASE_URL = "https://www.themealdb.com/api/json/v1/1";
 const DEFAULT_TIMEOUT_MS = 10_000;
@@ -23,6 +24,7 @@ export function createMealDbService({
 } = {}) {
   const origin = baseUrl.replace(/\/$/, "");
   const cache = new Map();
+  let ingredientCatalogRequest;
 
   async function request(path, parameters) {
     const url = new URL(`${origin}${path}`);
@@ -79,9 +81,37 @@ export function createMealDbService({
       return meals[0] || null;
     },
 
-    filterMealsByIngredient(ingredient) {
-      return request("/filter.php", {
+    async filterMealsByIngredient(ingredient) {
+      const meals = await request("/filter.php", {
         i: ingredient.replaceAll(" ", "_"),
+      });
+      if (meals.length) return meals;
+
+      // The provider requires its own spelling (e.g. Mushrooms), whereas our
+      // matching keys use singulars (mushroom). Resolve empty searches against
+      // its catalog instead of guessing a plural or changing the user's data.
+      // Share the lookup when several pantry searches run at the same time.
+      ingredientCatalogRequest ??= request("/list.php", { i: "list" }).finally(
+        () => {
+          ingredientCatalogRequest = null;
+        },
+      );
+      const catalog = await ingredientCatalogRequest;
+      const key = normalizeIngredient(ingredient.replaceAll("_", " "));
+      const match = catalog.find(
+        (item) =>
+          typeof item.strIngredient === "string" &&
+          normalizeIngredient(item.strIngredient) === key,
+      );
+      if (
+        !match ||
+        match.strIngredient.toLowerCase() ===
+          ingredient.replaceAll("_", " ").toLowerCase()
+      ) {
+        return meals;
+      }
+      return request("/filter.php", {
+        i: match.strIngredient.replaceAll(" ", "_"),
       });
     },
   };
